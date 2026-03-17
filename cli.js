@@ -62,12 +62,42 @@ function configureApiKey() {
   });
 }
 
+function checkDependencies() {
+  const serverNodeModules = path.join(CLI_DIR, 'server', 'node_modules');
+  const clientNodeModules = path.join(CLI_DIR, 'client', 'node_modules');
+  
+  if (!fs.existsSync(serverNodeModules) || !fs.existsSync(clientNodeModules)) {
+    console.log('Installing dependencies...\n');
+    const install = spawn('npm', ['run', 'install:all'], {
+      cwd: CLI_DIR,
+      stdio: 'inherit',
+      shell: true
+    });
+    install.on('close', (code) => {
+      if (code !== 0) {
+        console.error('Failed to install dependencies');
+        process.exit(1);
+      }
+      startServer();
+    });
+    return false;
+  }
+  return true;
+}
+
 function startServer() {
   console.log('Starting ChatBot server on http://localhost:3001...');
   console.log('Frontend will be available at http://localhost:5173\n');
   
-  const server = spawn('npm', ['run', 'dev'], {
+  const server = spawn('npx', ['tsx', 'watch', 'server/src/server.ts'], {
     cwd: CLI_DIR,
+    stdio: 'inherit',
+    shell: true,
+    env: { ...process.env }
+  });
+
+  const client = spawn('npx', ['vite'], {
+    cwd: path.join(CLI_DIR, 'client'),
     stdio: 'inherit',
     shell: true,
     env: { ...process.env }
@@ -78,8 +108,14 @@ function startServer() {
     process.exit(1);
   });
   
+  client.on('error', (err) => {
+    console.error('Failed to start client:', err);
+    process.exit(1);
+  });
+  
   process.on('SIGINT', () => {
     server.kill();
+    client.kill();
     process.exit(0);
   });
 }
@@ -93,10 +129,12 @@ switch (command) {
     break;
   case 'start':
     checkApiKey();
+    if (!checkDependencies()) return;
     startServer();
     break;
   case undefined:
     checkApiKey();
+    if (!checkDependencies()) return;
     startServer();
     break;
   case 'help':
