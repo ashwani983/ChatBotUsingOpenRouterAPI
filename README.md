@@ -6,16 +6,23 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 ## Quick Start (CLI)
 
-Install the ChatBot CLI globally and start chatting in minutes:
+Install the ChatBot CLI and start chatting in minutes:
 
+### Option 1: Install from GitHub Release (Recommended)
 ```bash
-npm install -g ai-chatbot-cli
+# Download and install the latest release
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v1.0.0/ai-chatbot-cli-1.0.0.tgz
 
 # Configure your API key
 chatbot config
 
 # Start the ChatBot
 chatbot
+```
+
+### Option 2: Install from npm (not available yet)
+```bash
+npm install -g ai-chatbot-cli
 ```
 
 Then open http://localhost:5173 in your browser.
@@ -26,9 +33,16 @@ Then open http://localhost:5173 in your browser.
 
 ### Installation
 
+**Option 1: From GitHub Release (Recommended)**
 ```bash
-npm install -g ai-chatbot-cli
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v1.0.0/ai-chatbot-cli-1.0.0.tgz
 ```
+
+**Option 2: Build from source**
+```bash
+git clone https://github.com/ashwani983/ChatBotUsingOpenRouterAPI.git
+cd ChatBotUsingOpenRouterAPI
+npm install -g ./
 
 ### API Key Configuration
 
