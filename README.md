@@ -2,6 +2,8 @@
 
 A responsive, full-stack AI chat interface similar to ChatGPT, built with React, Node.js, Express, and OpenRouter API.
 
+![Chat Application Screenshot](screenshot/chatbot-using-the-operoute.png)
+
 ## Features
 
 - **Real-time Streaming Responses** - Messages appear token-by-token (typewriter effect)
@@ -61,7 +63,8 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 1. Clone the repository and navigate to the project:
    ```bash
-   cd ChatBotUsingOpencodeAPI
+   git clone https://github.com/ashwani983/ChatBotUsingOpenRouterAPI.git
+   cd ChatBotUsingOpenRouterAPI
    ```
 
 2. Install all dependencies:
