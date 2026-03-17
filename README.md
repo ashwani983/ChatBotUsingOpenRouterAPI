@@ -4,55 +4,73 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 ![Chat Application Screenshot](screenshot/chatbot-using-the-operoute.png)
 
-## Features
+## Quick Start (CLI)
 
-- **Real-time Streaming Responses** - Messages appear token-by-token (typewriter effect)
-- **Chat History Sidebar** - View and switch between previous conversations
-- **Markdown & Syntax Highlighting** - Code blocks are properly formatted with syntax highlighting
-- **Auto-resizing Input** - Text area grows with content, Shift+Enter for new lines
-- **Loading States** - Animated "thinking" indicator while waiting for responses
-- **Persistent Storage** - Chat history saved to localStorage
-- **Dark Theme** - Modern ChatGPT-style dark UI
+Install the ChatBot CLI globally and start chatting in minutes:
 
-## Tech Stack
+```bash
+npm install -g ai-chatbot-cli
 
-### Frontend
-- React 18 with TypeScript
-- Vite (build tool)
-- Tailwind CSS (styling)
-- react-markdown (markdown rendering)
-- react-syntax-highlighter (code syntax highlighting)
+# Configure your API key
+chatbot config
 
-### Backend
-- Node.js with Express
-- OpenRouter API (free LLM access)
-- Server-Sent Events (SSE) for streaming
-
-## Project Structure
-
+# Start the ChatBot
+chatbot
 ```
-├── client/                 # React Frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── MessageList.tsx   # Chat messages with markdown
-│   │   │   └── ChatInput.tsx     # Auto-resizing input
-│   │   ├── App.tsx               # Main app with sidebar
-│   │   ├── main.tsx              # Entry point
-│   │   ├── types.ts              # TypeScript types
-│   │   └── index.css             # Global styles
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── package.json
-│
-├── server/                  # Express Backend
-│   ├── src/
-│   │   └── server.ts       # API endpoints with SSE
-│   ├── .env                # Environment variables
-│   └── package.json
-│
-├── package.json             # Root scripts
-└── README.md
+
+Then open http://localhost:5173 in your browser.
+
+---
+
+## CLI Installation & Usage
+
+### Installation
+
+```bash
+npm install -g ai-chatbot-cli
 ```
+
+### API Key Configuration
+
+Get a free API key from: https://openrouter.ai/settings
+
+**Option 1: Interactive setup (recommended)**
+```bash
+chatbot config
+```
+This will prompt you to enter your API key and save it to `~/.chatbotrc`.
+
+**Option 2: Environment variable**
+```bash
+export OPENROUTER_API_KEY=your_api_key_here
+```
+
+**Option 3: Config file**
+```bash
+echo '{"apiKey": "your_api_key_here"}' > ~/.chatbotrc
+```
+
+### Running the ChatBot
+
+```bash
+chatbot
+```
+
+This starts:
+- Backend server on http://localhost:3001
+- Frontend on http://localhost:5173
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `chatbot` | Start the ChatBot (default) |
+| `chatbot config` | Configure API key interactively |
+| `chatbot help` | Show help message |
+
+---
+
+## Development Setup
 
 ## Prerequisites
 
@@ -167,7 +185,10 @@ This builds the client to the `client/dist` folder.
 ## Troubleshooting
 
 ### API Key Error
-Make sure your OpenRouter API key is correctly set in `server/.env`
+Make sure your OpenRouter API key is correctly set:
+- Run `chatbot config` to configure interactively
+- Or set `OPENROUTER_API_KEY` environment variable
+- Or create `~/.chatbotrc` with `{"apiKey": "your_key"}`
 
 ### CORS Error
 The server is configured to allow CORS from the development server (localhost:5173)

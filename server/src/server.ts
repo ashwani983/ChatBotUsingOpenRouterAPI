@@ -2,17 +2,40 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import * as fs from 'fs';
+import * as path from 'path';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+let apiKey = process.env.OPENROUTER_API_KEY;
+
+if (!apiKey) {
+  const configPath = path.join(process.env.HOME || process.env.USERPROFILE || '', '.chatbotrc');
+  try {
+    if (fs.existsSync(configPath)) {
+      const configContent = fs.readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(configContent);
+      apiKey = config.apiKey;
+    }
+  } catch (e) {
+    console.error('Error reading config file:', e);
+  }
+}
+
+if (!apiKey) {
+  console.error('ERROR: OpenRouter API key not found. Please set OPENROUTER_API_KEY environment variable or create ~/.chatbotrc config file.');
+  console.error('Example config file: echo \'{"apiKey": "your_api_key"}\' > ~/.chatbotrc');
+  process.exit(1);
+}
+
 app.use(cors());
 app.use(express.json());
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: apiKey,
   baseURL: 'https://openrouter.ai/api/v1',
   defaultHeaders: {
     'HTTP-Referer': 'http://localhost:5173',
