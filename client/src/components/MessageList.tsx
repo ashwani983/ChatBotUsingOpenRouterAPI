@@ -6,13 +6,20 @@ import { Message } from '../types';
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  theme?: 'light' | 'dark';
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, theme = 'dark' }) => {
+  const codeStyle = vscDarkPlus;
+  const userBg = theme === 'dark' ? 'bg-blue-600' : 'bg-blue-600';
+  const assistantBg = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200';
+  const assistantText = theme === 'dark' ? 'text-white' : 'text-gray-900';
+  const codeInlineBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300';
+
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center text-gray-400">
+        <div className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-16 w-16 mx-auto mb-4 opacity-50"
@@ -46,8 +53,8 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
           <div
             className={`max-w-[80%] ${
               message.role === 'user'
-                ? 'bg-blue-600 text-white rounded-2xl px-5 py-3'
-                : 'bg-gray-800 rounded-2xl px-5 py-3'
+                ? `${userBg} text-white rounded-2xl px-5 py-3`
+                : `${assistantBg} ${assistantText} rounded-2xl px-5 py-3`
             }`}
           >
             <div className="flex items-start gap-3">
@@ -69,7 +76,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
               )}
               <div className="flex-1 min-w-0">
                 {message.role === 'assistant' ? (
-                  <div className="markdown-body prose prose-invert max-w-none">
+                  <div className={`markdown-body prose max-w-none ${theme === 'dark' ? 'prose-invert' : ''}`}>
                     <ReactMarkdown
                       components={{
                         code({ className, children, ...props }) {
@@ -77,14 +84,14 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
                           const isInline = !match;
                           return isInline ? (
                             <code
-                              className="bg-gray-700 px-1.5 py-0.5 rounded text-sm"
+                              className={`${codeInlineBg} px-1.5 py-0.5 rounded text-sm`}
                               {...props}
                             >
                               {children}
                             </code>
                           ) : (
                             <SyntaxHighlighter
-                              style={vscDarkPlus}
+                              style={codeStyle}
                               language={match[1]}
                               PreTag="div"
                             >
@@ -108,7 +115,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading }) => {
       
       {isLoading && messages.length > 0 && messages[messages.length - 1].role !== 'assistant' && (
         <div className="flex justify-start">
-          <div className="bg-gray-800 rounded-2xl px-5 py-3">
+          <div className={`${assistantBg} ${assistantText} rounded-2xl px-5 py-3`}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
                 <svg

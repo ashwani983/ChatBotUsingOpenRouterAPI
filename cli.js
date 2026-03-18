@@ -4,8 +4,11 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const http = require('http');
 
 const CLI_DIR = __dirname;
+const PID_FILE = path.join(CLI_DIR, '.chatbot.pid');
+const PORT_FILE = path.join(CLI_DIR, '.chatbot.port');
 
 function getApiKey() {
   let apiKey = process.env.OPENROUTER_API_KEY;
@@ -38,6 +41,155 @@ function checkApiKey() {
   }
 }
 
+function getPort() {
+  if (fs.existsSync(PORT_FILE)) {
+    return fs.readFileSync(PORT_FILE, 'utf-8').trim();
+  }
+  return '3001';
+}
+
+function setPort(port) {
+  fs.writeFileSync(PORT_FILE, port.toString());
+}
+
+function getPid() {
+  if (fs.existsSync(PID_FILE)) {
+    return parseInt(fs.readFileSync(PID_FILE, 'utf-8').trim());
+  }
+  return null;
+}
+
+function setPid(pid) {
+  fs.writeFileSync(PID_FILE, pid.toString());
+}
+
+function clearPid() {
+  if (fs.existsSync(PID_FILE)) {
+    fs.unlinkSync(PID_FILE);
+  }
+}
+
+function isServerRunning() {
+  const pid = getPid();
+  if (!pid) return false;
+  
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    clearPid();
+    return false;
+  }
+}
+
+function checkServerHealth(port) {
+  return new Promise((resolve) => {
+    const req = http.get(`http://localhost:${port}/api/health`, (res) => {
+      resolve(res.statusCode === 200);
+    });
+    req.on('error', () => resolve(false));
+    req.setTimeout(3000, () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+
+async function showStatus() {
+  const port = getPort();
+  const pid = getPid();
+  
+  if (!pid || !isServerRunning()) {
+    console.log('ChatBot server is not running.');
+    console.log(`Run 'chatbot start' to start the server.`);
+    return;
+  }
+  
+  const isHealthy = await checkServerHealth(port);
+  
+  console.log('ChatBot Server Status');
+  console.log('─'.repeat(30));
+  console.log(`Status:    ${isHealthy ? 'Running' : 'Not responding'}`);
+  console.log(`PID:       ${pid}`);
+  console.log(`Port:      ${port}`);
+  console.log(`URL:       http://localhost:${port}`);
+  console.log('');
+}
+
+function stopServer() {
+  const pid = getPid();
+  
+  if (!pid) {
+    console.log('No running server found.');
+    return;
+  }
+  
+  if (!isServerRunning()) {
+    console.log('Server is not running. Cleaning up...');
+    clearPid();
+    return;
+  }
+  
+  try {
+    process.kill(pid, 'SIGTERM');
+    console.log('Server stopped.');
+    clearPid();
+  } catch (e) {
+    console.log('Failed to stop server. Try: chatbot restart');
+    clearPid();
+  }
+}
+
+function restartServer() {
+  const port = getPort();
+  
+  if (isServerRunning()) {
+    stopServer();
+    setTimeout(() => startServer(port), 1000);
+  } else {
+    startServer(port);
+  }
+}
+
+function startServer(customPort) {
+  const port = customPort || process.argv.includes('--port') 
+    ? process.argv[process.argv.indexOf('--port') + 1] || '3001'
+    : getPort();
+  
+  if (isServerRunning()) {
+    console.log(`Server is already running on port ${port}.`);
+    console.log(`Run 'chatbot status' for details.`);
+    return;
+  }
+  
+  setPort(port);
+  
+  console.log(`Starting ChatBot server on http://localhost:${port}...\n`);
+  
+  const env = { ...process.env, PORT: port };
+  
+  const server = spawn('node', ['server/dist/server.js'], {
+    cwd: CLI_DIR,
+    detached: true,
+    stdio: 'ignore',
+    shell: true,
+    env
+  });
+  
+  setPid(server.pid);
+  server.unref();
+  
+  setTimeout(async () => {
+    if (await checkServerHealth(port)) {
+      console.log('ChatBot is running in the background.');
+      console.log(`Open http://localhost:${port} in your browser to start chatting.\n`);
+    } else {
+      console.log('Server started but not responding. Check logs for errors.');
+    }
+    process.exit(0);
+  }, 2000);
+}
+
 function configureApiKey() {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -62,64 +214,6 @@ function configureApiKey() {
   });
 }
 
-function checkDependencies() {
-  const serverNodeModules = path.join(CLI_DIR, 'server', 'node_modules');
-  const clientNodeModules = path.join(CLI_DIR, 'client', 'node_modules');
-  
-  if (!fs.existsSync(serverNodeModules) || !fs.existsSync(clientNodeModules)) {
-    console.log('Installing dependencies...\n');
-    const install = spawn('npm', ['run', 'install:all'], {
-      cwd: CLI_DIR,
-      stdio: 'inherit',
-      shell: true
-    });
-    install.on('close', (code) => {
-      if (code !== 0) {
-        console.error('Failed to install dependencies');
-        process.exit(1);
-      }
-      startServer();
-    });
-    return false;
-  }
-  return true;
-}
-
-function startServer() {
-  console.log('Starting ChatBot server on http://localhost:3001...');
-  console.log('Frontend will be available at http://localhost:5173\n');
-  
-  const server = spawn('npx', ['tsx', 'watch', 'server/src/server.ts'], {
-    cwd: CLI_DIR,
-    stdio: 'inherit',
-    shell: true,
-    env: { ...process.env }
-  });
-
-  const client = spawn('npx', ['vite'], {
-    cwd: path.join(CLI_DIR, 'client'),
-    stdio: 'inherit',
-    shell: true,
-    env: { ...process.env }
-  });
-  
-  server.on('error', (err) => {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  });
-  
-  client.on('error', (err) => {
-    console.error('Failed to start client:', err);
-    process.exit(1);
-  });
-  
-  process.on('SIGINT', () => {
-    server.kill();
-    client.kill();
-    process.exit(0);
-  });
-}
-
 const args = process.argv.slice(2);
 const command = args[0];
 
@@ -129,12 +223,20 @@ switch (command) {
     break;
   case 'start':
     checkApiKey();
-    if (!checkDependencies()) return;
     startServer();
+    break;
+  case 'stop':
+    stopServer();
+    break;
+  case 'status':
+    showStatus();
+    break;
+  case 'restart':
+    checkApiKey();
+    restartServer();
     break;
   case undefined:
     checkApiKey();
-    if (!checkDependencies()) return;
     startServer();
     break;
   case 'help':
@@ -145,12 +247,25 @@ ChatBot CLI - AI Chat using OpenRouter
 
 Usage:
   chatbot              Start the ChatBot server (default)
+  chatbot start       Start the ChatBot server
+  chatbot stop        Stop the running server
+  chatbot status      Show server status
+  chatbot restart     Restart the server
   chatbot config      Configure your API key
   chatbot help        Show this help message
 
 Options:
   -h, --help          Show help
+  --port <number>     Specify port (default: 3001)
   config              Configure API key interactively
+
+Examples:
+  chatbot                   Start server on default port (3001)
+  chatbot --port 8080      Start server on port 8080
+  chatbot status           Check if server is running
+  chatbot stop             Stop the server
+  chatbot restart          Restart the server
+  chatbot config           Configure API key
 
 Environment Variables:
   OPENROUTER_API_KEY  Your OpenRouter API key
@@ -158,16 +273,16 @@ Environment Variables:
 Config File:
   ~/.chatbotrc        JSON file with {"apiKey": "your_key"}
 
-Examples:
-  chatbot             Start server
-  chatbot config     Configure API key
-  OPENROUTER_API_KEY=xxx chatbot  Start with env variable
-
 Get a free API key from: https://openrouter.ai/settings
 `);
     break;
   default:
-    console.error('Unknown command: ' + command);
-    console.error('Run "chatbot help" for usage information.');
-    process.exit(1);
+    if (command.startsWith('--port')) {
+      checkApiKey();
+      startServer();
+    } else {
+      console.error('Unknown command: ' + command);
+      console.error('Run "chatbot help" for usage information.');
+      process.exit(1);
+    }
 }

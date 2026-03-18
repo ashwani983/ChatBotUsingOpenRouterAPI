@@ -4,14 +4,25 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 ![Chat Application Screenshot](screenshot/chatbot-using-the-operoute.png)
 
+## v2.0.0 Features
+
+- **Multiple AI Models** - Switch between Llama, Gemma, Mistral, Phi-3, DeepSeek
+- **Chat History** - Persistent conversations stored in SQLite
+- **Dark/Light Theme** - Toggle between dark and light modes
+- **Settings Panel** - Customize temperature, max tokens, system prompt
+- **Server Management** - `chatbot start`, `stop`, `status`, `restart` commands
+- **Custom Port** - `chatbot --port 3002`
+
 ## Quick Start (CLI)
 
 Install the ChatBot CLI and start chatting in minutes:
 
 ### Option 1: Install from GitHub Release (Recommended)
+
+**Linux/macOS:**
 ```bash
 # Download and install the latest release
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v1.0.0/ai-chatbot-cli-1.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
 
 # Configure your API key
 chatbot config
@@ -20,139 +31,166 @@ chatbot config
 chatbot
 ```
 
-### Option 2: Install from npm (not available yet)
-```bash
-npm install -g ai-chatbot-cli
+**Windows (PowerShell or Command Prompt):**
+```powershell
+# Download and install the latest release
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+
+# Configure your API key
+chatbot config
+
+# Start the ChatBot
+chatbot
 ```
 
-Then open http://localhost:5173 in your browser.
+Then open http://localhost:3001 in your browser.
 
 ---
 
-## CLI Installation & Usage
+## Installation Steps by Platform
 
-### Installation
+### Prerequisites
+- Node.js 18 or higher
+- npm (comes with Node.js)
 
-**Option 1: From GitHub Release (Recommended)**
+### Step 1: Install the CLI
+
+**Linux:**
 ```bash
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v1.0.0/ai-chatbot-cli-1.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
 ```
 
-**Option 2: Build from source**
+**macOS:**
 ```bash
-git clone https://github.com/ashwani983/ChatBotUsingOpenRouterAPI.git
-cd ChatBotUsingOpenRouterAPI
-npm install -g ./
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+```
 
-### API Key Configuration
+**Windows:**
+```cmd
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+```
+
+### Step 2: Configure Your API Key
 
 Get a free API key from: https://openrouter.ai/settings
 
-**Option 1: Interactive setup (recommended)**
+**Option A - Interactive (Recommended):**
 ```bash
 chatbot config
 ```
-This will prompt you to enter your API key and save it to `~/.chatbotrc`.
 
-**Option 2: Environment variable**
+**Option B - Environment Variable:**
 ```bash
+# Linux/macOS
 export OPENROUTER_API_KEY=your_api_key_here
+
+# Windows (Command Prompt)
+set OPENROUTER_API_KEY=your_api_key_here
+
+# Windows (PowerShell)
+$env:OPENROUTER_API_KEY="your_api_key_here"
 ```
 
-**Option 3: Config file**
+**Option C - Config File:**
 ```bash
+# Linux/macOS
 echo '{"apiKey": "your_api_key_here"}' > ~/.chatbotrc
+
+# Windows (Command Prompt)
+echo {"apiKey": "your_api_key_here"} > %USERPROFILE%\.chatbotrc
+
+# Windows (PowerShell)
+echo '{"apiKey": "your_api_key_here"}' | Out-File -FilePath "$env:USERPROFILE\.chatbotrc"
 ```
 
-### Running the ChatBot
+### Step 3: Start the ChatBot
 
 ```bash
 chatbot
 ```
 
-This starts:
-- Backend server on http://localhost:3001
-- Frontend on http://localhost:5173
+The server will start in the background. Open **http://localhost:3001** in your browser.
 
-### CLI Commands
+### Step 4: Stop the Server
+
+Press `Ctrl+C` in the terminal to stop the server.
+
+---
+
+## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `chatbot` | Start the ChatBot (default) |
+| `chatbot` | Start the ChatBot server |
 | `chatbot config` | Configure API key interactively |
 | `chatbot help` | Show help message |
 
 ---
 
-## Development Setup
+## Troubleshooting
 
-## Prerequisites
+### "command not found" on Windows
+If the `chatbot` command is not found after installation, you may need to:
+1. Restart your terminal
+2. Or add npm global path to your PATH: `npm config get prefix`
 
+### API Key Error
+- Make sure your OpenRouter API key is correctly set
+- Run `chatbot config` to reconfigure
+- Check https://openrouter.ai/settings for your key
+
+### Port Already in Use
+If port 3001 is in use, you can:
+1. Kill the process using port 3001, or
+2. Set a different port: `PORT=3002 chatbot`
+
+### Server Not Starting
+Make sure you have:
+- Node.js 18+ installed: `node --version`
+- npm installed: `npm --version`
+
+---
+
+## Development Setup (Building from Source)
+
+### Prerequisites
 - Node.js 18+
 - npm or yarn
 
-## Installation
+### Installation
 
-1. Clone the repository and navigate to the project:
-   ```bash
-   git clone https://github.com/ashwani983/ChatBotUsingOpenRouterAPI.git
-   cd ChatBotUsingOpenRouterAPI
-   ```
+1. Clone the repository:
+```bash
+git clone https://github.com/ashwani983/ChatBotUsingOpenRouterAPI.git
+cd ChatBotUsingOpenRouterAPI
+```
 
 2. Install all dependencies:
-   ```bash
-   npm run install:all
-   ```
-
-   Or install manually:
-   ```bash
-   npm install
-   cd server && npm install
-   cd ../client && npm install
-   ```
+```bash
+npm run install:all
+```
 
 3. Configure environment variables:
-   
-   Edit `server/.env` and add your OpenRouter API key:
-   ```
-   OPENROUTER_API_KEY=your_api_key_here
-   PORT=3001
-   ```
+Edit `server/.env` and add your OpenRouter API key:
+```
+OPENROUTER_API_KEY=your_api_key_here
+PORT=3001
+```
 
-   Get a free API key from: https://openrouter.ai/settings
+### Running
 
-## Running the Application
+```bash
+chatbot
+```
 
-### Option 1: Run both server and client together (Recommended)
+Or for development:
 ```bash
 npm run dev
 ```
 
-This starts:
-- Backend server on http://localhost:3001
-- Frontend on http://localhost:5173
+Open http://localhost:3001 in your browser.
 
-### Option 2: Run separately
-
-Terminal 1 - Server:
-```bash
-cd server
-npm run dev
-```
-
-Terminal 2 - Client:
-```bash
-cd client
-npm run dev
-```
-
-## Usage
-
-1. Open http://localhost:5173 in your browser
-2. Type a message in the input box
-3. Press Enter to send, Shift+Enter for new line
-4. Click "New Chat" to start a new conversation
-5. Previous chats appear in the left sidebar
+---
 
 ## Available Free Models
 
@@ -170,47 +208,6 @@ Other free models available on OpenRouter:
 - `mistralai/mistral-7b-instruct`
 - `microsoft/phi-3-mini-128k-instruct`
 - `deepseek/deepseek-chat`
-
-## API Endpoints
-
-### POST /api/chat
-Send a message and receive streaming response.
-
-**Request:**
-```json
-{
-  "message": "Hello, how are you?"
-}
-```
-
-**Response:** Server-Sent Events (SSE) stream
-
-### POST /api/chat/reset
-Reset the current conversation history.
-
-## Building for Production
-
-```bash
-npm run build
-```
-
-This builds the client to the `client/dist` folder.
-
-## Troubleshooting
-
-### API Key Error
-Make sure your OpenRouter API key is correctly set:
-- Run `chatbot config` to configure interactively
-- Or set `OPENROUTER_API_KEY` environment variable
-- Or create `~/.chatbotrc` with `{"apiKey": "your_key"}`
-
-### CORS Error
-The server is configured to allow CORS from the development server (localhost:5173)
-
-### Port Already in Use
-If port 3001 or 5173 is in use, modify:
-- Server: `server/.env` → `PORT=3002`
-- Client: `client/vite.config.ts` → change port
 
 ## License
 

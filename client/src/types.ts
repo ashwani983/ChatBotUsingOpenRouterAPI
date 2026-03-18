@@ -1,11 +1,28 @@
 export interface Message {
-  id: string;
+  id: number;
   role: 'user' | 'assistant';
   content: string;
+  created_at?: string;
 }
 
-export interface ChatSession {
-  id: string;
+export interface Conversation {
+  id: number;
   title: string;
-  messages: Message[];
+  model: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+}
+
+export interface Settings {
+  theme: string;
+  model: string;
+  temperature: string;
+  max_tokens: string;
+  system_prompt: string;
 }

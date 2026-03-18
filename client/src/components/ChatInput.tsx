@@ -3,11 +3,19 @@ import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from 'react';
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
   isLoading: boolean;
+  theme?: 'light' | 'dark';
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, theme = 'dark' }) => {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-300';
+  const bgColor = theme === 'dark' ? 'bg-gray-800' : 'bg-white';
+  const inputBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-gray-900';
+  const placeholderColor = theme === 'dark' ? 'placeholder-gray-400' : 'placeholder-gray-500';
+  const helperTextColor = theme === 'dark' ? 'text-gray-500' : 'text-gray-400';
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -38,7 +46,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
   };
 
   return (
-    <div className="border-t border-gray-700 bg-gray-800 px-4 py-4">
+    <div className={`border-t ${borderColor} ${bgColor} px-4 py-4`}>
       <div className="max-w-3xl mx-auto">
         <div className="relative">
           <textarea
@@ -49,7 +57,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             placeholder="Type your message..."
             rows={1}
             disabled={isLoading}
-            className="w-full bg-gray-700 text-white rounded-xl px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-full ${inputBg} ${textColor} rounded-xl px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${placeholderColor}`}
             style={{ minHeight: '52px', maxHeight: '200px' }}
           />
           <button
@@ -67,7 +75,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             </svg>
           </button>
         </div>
-        <p className="text-center text-xs text-gray-500 mt-2">
+        <p className={`text-center text-xs ${helperTextColor} mt-2`}>
           Press Enter to send, Shift + Enter for new line
         </p>
       </div>
