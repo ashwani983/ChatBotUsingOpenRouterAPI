@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
-import Database from 'better-sqlite3';
+import initSqlJs from 'sql.js';
 
 dotenv.config();
 
@@ -16,44 +16,71 @@ const dataDir = path.join(home, '.chatbot');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
-const dbPath = path.join(dataDir, 'data.db');
-const db = new Database(dbPath);
+const dbPath = path.join(dataDir, 'chatbot.db');
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS conversations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL DEFAULT 'New Chat',
-    model TEXT DEFAULT 'meta-llama/llama-3.1-8b-instruct',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+let db: any;
 
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    conversation_id INTEGER NOT NULL,
-    role TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-  );
+async function initDatabase() {
+  const SQL = await initSqlJs();
+  
+  let data: Buffer | undefined;
+  if (fs.existsSync(dbPath)) {
+    data = fs.readFileSync(dbPath);
+  }
+  
+  db = new SQL.Database(data);
+  
+  db.run(`
+    CREATE TABLE IF NOT EXISTS conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL DEFAULT 'New Chat',
+      model TEXT DEFAULT 'meta-llama/llama-3.1-8b-instruct',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  
+  db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id INTEGER NOT NULL,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    )
+  `);
+  
+  db.run(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
+  
+  const defaultSettings = [
+    ['theme', 'dark'],
+    ['model', 'meta-llama/llama-3.1-8b-instruct'],
+    ['temperature', '0.7'],
+    ['max_tokens', '2048'],
+    ['system_prompt', 'You are a helpful AI assistant. You provide clear, concise, and accurate responses. When providing code examples, use proper formatting and explain your reasoning.']
+  ];
+  
+  for (const [key, value] of defaultSettings) {
+    db.run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', [key, value]);
+  }
+  
+  saveDatabase();
+  
+  console.log('Database initialized at:', dbPath);
+}
 
-  CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL
-  );
-`);
-
-const defaultSettings = [
-  ['theme', 'dark'],
-  ['model', 'meta-llama/llama-3.1-8b-instruct'],
-  ['temperature', '0.7'],
-  ['max_tokens', '2048'],
-  ['system_prompt', 'You are a helpful AI assistant. You provide clear, concise, and accurate responses. When providing code examples, use proper formatting and explain your reasoning.']
-];
-
-const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
-for (const [key, value] of defaultSettings) {
-  insertSetting.run(key, value);
+function saveDatabase() {
+  if (db) {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    fs.writeFileSync(dbPath, buffer);
+  }
 }
 
 let apiKey = process.env.OPENROUTER_API_KEY;
@@ -107,85 +134,113 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/conversations', (req, res) => {
-  const conversations = db.prepare(`
-    SELECT id, title, model, created_at, updated_at 
-    FROM conversations 
-    ORDER BY updated_at DESC
-  `).all();
+  const result = db.exec('SELECT id, title, model, created_at, updated_at FROM conversations ORDER BY updated_at DESC');
+  const conversations = result.length > 0 ? result[0].values.map((row: any) => ({
+    id: row[0],
+    title: row[1],
+    model: row[2],
+    created_at: row[3],
+    updated_at: row[4]
+  })) : [];
   res.json(conversations);
 });
 
 app.post('/api/conversations', (req, res) => {
-  const result = db.prepare(`
-    INSERT INTO conversations (title, model) VALUES (?, ?)
-  `).run('New Chat', 'meta-llama/llama-3.1-8b-instruct');
+  db.run('INSERT INTO conversations (title, model) VALUES (?, ?)', ['New Chat', 'meta-llama/llama-3.1-8b-instruct']);
+  const result = db.exec('SELECT last_insert_rowid()');
+  const lastId = result[0].values[0][0];
+  saveDatabase();
   
-  const conversation = db.prepare('SELECT * FROM conversations WHERE id = ?').get(result.lastInsertRowid);
-  res.json(conversation);
+  const convResult = db.exec('SELECT id, title, model, created_at, updated_at FROM conversations WHERE id = ?', [lastId]);
+  const row = convResult[0].values[0];
+  res.json({
+    id: row[0],
+    title: row[1],
+    model: row[2],
+    created_at: row[3],
+    updated_at: row[4]
+  });
 });
 
 app.get('/api/conversations/:id', (req, res) => {
-  const conversation = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
-  if (!conversation) {
+  const result = db.exec('SELECT id, title, model, created_at, updated_at FROM conversations WHERE id = ?', [req.params.id]);
+  if (result.length === 0 || result[0].values.length === 0) {
     return res.status(404).json({ error: 'Conversation not found' });
   }
-  res.json(conversation);
+  const row = result[0].values[0];
+  res.json({
+    id: row[0],
+    title: row[1],
+    model: row[2],
+    created_at: row[3],
+    updated_at: row[4]
+  });
 });
 
 app.put('/api/conversations/:id', (req, res) => {
   const { title } = req.body;
-  db.prepare(`
-    UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-  `).run(title, req.params.id);
+  db.run('UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [title, req.params.id]);
+  saveDatabase();
   
-  const conversation = db.prepare('SELECT * FROM conversations WHERE id = ?').get(req.params.id);
-  res.json(conversation);
+  const result = db.exec('SELECT id, title, model, created_at, updated_at FROM conversations WHERE id = ?', [req.params.id]);
+  const row = result[0].values[0];
+  res.json({
+    id: row[0],
+    title: row[1],
+    model: row[2],
+    created_at: row[3],
+    updated_at: row[4]
+  });
 });
 
 app.delete('/api/conversations/:id', (req, res) => {
-  db.prepare('DELETE FROM messages WHERE conversation_id = ?').run(req.params.id);
-  db.prepare('DELETE FROM conversations WHERE id = ?').run(req.params.id);
+  db.run('DELETE FROM messages WHERE conversation_id = ?', [req.params.id]);
+  db.run('DELETE FROM conversations WHERE id = ?', [req.params.id]);
+  saveDatabase();
   res.json({ success: true });
 });
 
 app.delete('/api/conversations', (req, res) => {
-  db.prepare('DELETE FROM messages').run();
-  db.prepare('DELETE FROM conversations').run();
+  db.run('DELETE FROM messages');
+  db.run('DELETE FROM conversations');
+  saveDatabase();
   res.json({ success: true });
 });
 
 app.get('/api/conversations/:id/messages', (req, res) => {
-  const messages = db.prepare(`
-    SELECT id, role, content, created_at 
-    FROM messages 
-    WHERE conversation_id = ? 
-    ORDER BY created_at ASC
-  `).all(req.params.id);
+  const result = db.exec('SELECT id, role, content, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
+  const messages = result.length > 0 ? result[0].values.map((row: any) => ({
+    id: row[0],
+    role: row[1],
+    content: row[2],
+    created_at: row[3]
+  })) : [];
   res.json(messages);
 });
 
 app.delete('/api/messages/:id', (req, res) => {
-  db.prepare('DELETE FROM messages WHERE id = ?').run(req.params.id);
+  db.run('DELETE FROM messages WHERE id = ?', [req.params.id]);
+  saveDatabase();
   res.json({ success: true });
 });
 
 app.get('/api/settings', (req, res) => {
-  const settings = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
+  const result = db.exec('SELECT key, value FROM settings');
   const settingsObj: Record<string, string> = {};
-  for (const s of settings) {
-    settingsObj[s.key] = s.value;
+  if (result.length > 0) {
+    for (const row of result[0].values) {
+      settingsObj[row[0] as string] = row[1] as string;
+    }
   }
   res.json(settingsObj);
 });
 
 app.put('/api/settings', (req, res) => {
   const updates = req.body;
-  const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-  
   for (const [key, value] of Object.entries(updates)) {
-    stmt.run(key, String(value));
+    db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, String(value)]);
   }
-  
+  saveDatabase();
   res.json({ success: true });
 });
 
@@ -198,32 +253,34 @@ app.post('/api/chat', async (req, res) => {
 
   let convId = conversationId;
   if (!convId) {
-    const result = db.prepare('INSERT INTO conversations (title, model) VALUES (?, ?)').run('New Chat', model || 'meta-llama/llama-3.1-8b-instruct');
-    convId = result.lastInsertRowid;
+    db.run('INSERT INTO conversations (title, model) VALUES (?, ?)', ['New Chat', model || 'meta-llama/llama-3.1-8b-instruct']);
+    const result = db.exec('SELECT last_insert_rowid()');
+    convId = result[0].values[0][0];
+    saveDatabase();
   }
 
-  const settingGet = db.prepare('SELECT value FROM settings WHERE key = ?') as any;
-  const sysPromptSetting = settingGet.get('system_prompt') as { value: string } | undefined;
-  const modelSetting = settingGet.get('model') as { value: string } | undefined;
-  const tempSetting = settingGet.get('temperature') as { value: string } | undefined;
-  const maxTokensSetting = settingGet.get('max_tokens') as { value: string } | undefined;
+  const getSetting = (key: string): string | null => {
+    const result = db.exec('SELECT value FROM settings WHERE key = ?', [key]);
+    return result.length > 0 && result[0].values.length > 0 ? result[0].values[0][0] as string : null;
+  };
   
-  const sysPrompt = system_prompt || sysPromptSetting?.value || 'You are a helpful AI assistant.';
-  const modelUsed = model || modelSetting?.value || 'meta-llama/llama-3.1-8b-instruct';
-  const temp = temperature || parseFloat(tempSetting?.value || '0.7');
-  const maxTok = max_tokens || parseInt(maxTokensSetting?.value || '2048');
+  const sysPrompt = system_prompt || getSetting('system_prompt') || 'You are a helpful AI assistant.';
+  const modelUsed = model || getSetting('model') || 'meta-llama/llama-3.1-8b-instruct';
+  const temp = temperature || parseFloat(getSetting('temperature') || '0.7');
+  const maxTok = max_tokens || parseInt(getSetting('max_tokens') || '2048');
 
-  const dbMessages = db.prepare(`
-    SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC
-  `).all(convId);
-
-  const messages: { role: string; content: string }[] = [
+  const msgResult = db.exec('SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [convId]);
+  const dbMessages: { role: string; content: string }[] = msgResult.length > 0 
+    ? msgResult[0].values.map((row: any) => ({ role: row[0], content: row[1] }))
+    : [];
+  
+  const messages = [
     { role: 'system', content: sysPrompt },
-    ...dbMessages.map((m: any) => ({ role: m.role, content: m.content })),
+    ...dbMessages,
     { role: 'user', content: message }
   ];
 
-  db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(convId, 'user', message);
+  db.run('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)', [convId, 'user', message]);
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -249,13 +306,15 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
-    db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)').run(convId, 'assistant', assistantMessage);
+    db.run('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)', [convId, 'assistant', assistantMessage]);
     
     const firstWord = assistantMessage.split(' ')[0].toLowerCase();
     if (firstWord && assistantMessage.length > 20) {
-      db.prepare('UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .run(firstWord.charAt(0).toUpperCase() + firstWord.slice(1) + (assistantMessage.length > 20 ? '...' : ''), convId);
+      db.run('UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+        [firstWord.charAt(0).toUpperCase() + firstWord.slice(1) + (assistantMessage.length > 20 ? '...' : ''), convId]);
     }
+    
+    saveDatabase();
 
     res.write('data: [DONE]\n\n');
     res.end();
@@ -269,7 +328,8 @@ app.post('/api/chat', async (req, res) => {
 app.post('/api/chat/reset', (req, res) => {
   const { conversationId } = req.body;
   if (conversationId) {
-    db.prepare('DELETE FROM messages WHERE conversation_id = ?').run(conversationId);
+    db.run('DELETE FROM messages WHERE conversation_id = ?', [conversationId]);
+    saveDatabase();
   }
   res.json({ success: true });
 });
@@ -284,7 +344,13 @@ if (fs.existsSync(clientDistPath)) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Database initialized at: ${dbPath}`);
-});
+async function startServer() {
+  await initDatabase();
+  
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Database initialized at: ${dbPath}`);
+  });
+}
+
+startServer();

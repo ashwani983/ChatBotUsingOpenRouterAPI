@@ -9,12 +9,21 @@ const http = require('http');
 const CLI_DIR = __dirname;
 const PID_FILE = path.join(CLI_DIR, '.chatbot.pid');
 const PORT_FILE = path.join(CLI_DIR, '.chatbot.port');
+const LOG_FILE = path.join(CLI_DIR, 'chatbot.log');
+
+function log(message) {
+  const timestamp = new Date().toISOString();
+  const logMessage = `[${timestamp}] ${message}\n`;
+  fs.appendFileSync(LOG_FILE, logMessage);
+  console.log(message);
+}
 
 function getApiKey() {
   let apiKey = process.env.OPENROUTER_API_KEY;
   
   if (!apiKey) {
-    const configPath = path.join(process.env.HOME || process.env.USERPROFILE || '', '.chatbotrc');
+    const home = process.env.HOME || process.env.USERPROFILE || '';
+    const configPath = path.join(home, '.chatbotrc');
     try {
       if (fs.existsSync(configPath)) {
         const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -32,9 +41,10 @@ function checkApiKey() {
     console.error('\nError: OpenRouter API key not found.');
     console.error('\nPlease set your API key using one of these methods:\n');
     console.error('  1. Environment variable:');
-    console.error('     export OPENROUTER_API_KEY=your_api_key_here');
-    console.error('\n  2. Config file (~/.chatbotrc):');
-    console.error('     echo \'{"apiKey": "your_api_key_here"}\' > ~/.chatbotrc');
+    console.error('     set OPENROUTER_API_KEY=your_api_key_here');
+    console.error('\n  2. Config file:');
+    const home = process.env.HOME || process.env.USERPROFILE || '';
+    console.error(`     echo {"apiKey": "your_api_key_here"} > ${path.join(home, '.chatbotrc')}`);
     console.error('\n  3. Run: chatbot config');
     console.error('\n  Get a free API key from: https://openrouter.ai/settings\n');
     process.exit(1);
@@ -95,6 +105,10 @@ function checkServerHealth(port) {
   });
 }
 
+function checkDependencies() {
+  return Promise.resolve(true);
+}
+
 async function showStatus() {
   const port = getPort();
   const pid = getPid();
@@ -113,6 +127,7 @@ async function showStatus() {
   console.log(`PID:       ${pid}`);
   console.log(`Port:      ${port}`);
   console.log(`URL:       http://localhost:${port}`);
+  console.log(`Log file:  ${LOG_FILE}`);
   console.log('');
 }
 
@@ -151,10 +166,18 @@ function restartServer() {
   }
 }
 
-function startServer(customPort) {
-  const port = customPort || process.argv.includes('--port') 
-    ? process.argv[process.argv.indexOf('--port') + 1] || '3001'
-    : getPort();
+function getPortFromArgs() {
+  const args = process.argv.slice(2);
+  const portIndex = args.indexOf('--port');
+  if (portIndex !== -1 && args[portIndex + 1]) {
+    return args[portIndex + 1];
+  }
+  return null;
+}
+
+async function startServer(customPort) {
+  const portFromArgs = getPortFromArgs();
+  const port = customPort || portFromArgs || getPort();
   
   if (isServerRunning()) {
     console.log(`Server is already running on port ${port}.`);
@@ -162,32 +185,45 @@ function startServer(customPort) {
     return;
   }
   
+  try {
+    await checkDependencies();
+  } catch (e) {
+    process.exit(1);
+  }
+  
   setPort(port);
   
+  log(`Starting ChatBot server on http://localhost:${port}...`);
   console.log(`Starting ChatBot server on http://localhost:${port}...\n`);
   
   const env = { ...process.env, PORT: port };
   
-  const server = spawn('node', ['server/dist/server.js'], {
+  const serverPath = path.join(CLI_DIR, 'server', 'dist', 'server.js');
+  
+  const logStream = fs.openSync(LOG_FILE, 'a');
+  
+  const server = spawn('node', [serverPath], {
     cwd: CLI_DIR,
     detached: true,
-    stdio: 'ignore',
+    stdio: ['ignore', logStream, logStream],
     shell: true,
     env
   });
   
-  setPid(server.pid);
   server.unref();
+  setPid(server.pid);
   
   setTimeout(async () => {
     if (await checkServerHealth(port)) {
       console.log('ChatBot is running in the background.');
-      console.log(`Open http://localhost:${port} in your browser to start chatting.\n`);
+      console.log(`Open http://localhost:${port} in your browser.`);
+      console.log(`Log file: ${LOG_FILE}\n`);
     } else {
-      console.log('Server started but not responding. Check logs for errors.');
+      console.log('Server started but may have errors.');
+      console.log(`Check logs at: ${LOG_FILE}`);
     }
     process.exit(0);
-  }, 2000);
+  }, 3000);
 }
 
 function configureApiKey() {
@@ -207,7 +243,8 @@ function configureApiKey() {
       process.exit(1);
     }
     
-    const configPath = path.join(process.env.HOME || process.env.USERPROFILE || '', '.chatbotrc');
+    const home = process.env.HOME || process.env.USERPROFILE || '';
+    const configPath = path.join(home, '.chatbotrc');
     fs.writeFileSync(configPath, JSON.stringify({ apiKey: apiKey.trim() }, null, 2));
     console.log(`\nAPI key saved to ${configPath}`);
     console.log('You can now run: chatbot\n');
