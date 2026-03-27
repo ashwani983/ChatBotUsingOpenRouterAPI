@@ -313,10 +313,10 @@ app.post('/api/chat', async (req, res) => {
 
     db.run('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)', [convId, 'assistant', assistantMessage]);
     
-    const firstWord = assistantMessage.split(' ')[0].toLowerCase();
-    if (firstWord && assistantMessage.length > 20) {
+    const titleMessage = message.length > 30 ? message.substring(0, 30) + '...' : message;
+    if (message.length > 0) {
       db.run('UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-        [firstWord.charAt(0).toUpperCase() + firstWord.slice(1) + (assistantMessage.length > 20 ? '...' : ''), convId]);
+        [titleMessage, convId]);
     }
     
     saveDatabase();
@@ -367,6 +367,19 @@ app.get('/api/conversations/search', (req, res) => {
   res.json(conversations);
 });
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 app.get('/api/export/:id/markdown', (req, res) => {
   const convResult = db.exec('SELECT title, created_at FROM conversations WHERE id = ?', [req.params.id]);
   if (convResult.length === 0 || convResult[0].values.length === 0) {
@@ -388,10 +401,11 @@ app.get('/api/export/:id/markdown', (req, res) => {
   
   for (const msg of messages) {
     const label = msg.role === 'user' ? '**User**' : '**Assistant**';
-    markdown += `${label}:\n\n${msg.content}\n\n---\n\n`;
+    const cleanContent = stripHtml(msg.content);
+    markdown += `${label}:\n\n${cleanContent}\n\n---\n\n`;
   }
   
-  res.setHeader('Content-Type', 'text/markdown');
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.md"`);
   res.send(markdown);
 });
@@ -417,10 +431,11 @@ app.get('/api/export/:id/text', (req, res) => {
   
   for (const msg of messages) {
     const label = msg.role === 'user' ? 'USER' : 'ASSISTANT';
-    text += `[${label}]\n${msg.content}\n\n${'─'.repeat(40)}\n\n`;
+    const cleanContent = stripHtml(msg.content);
+    text += `[${label}]\n${cleanContent}\n\n${'─'.repeat(40)}\n\n`;
   }
   
-  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.txt"`);
   res.send(text);
 });

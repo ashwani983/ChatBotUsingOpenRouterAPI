@@ -5,15 +5,13 @@ interface ChatInputProps {
   isLoading: boolean;
   theme?: 'light' | 'dark';
   voiceEnabled?: boolean;
-  onVoiceTranscript?: (text: string) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   onSendMessage, 
   isLoading, 
   theme = 'dark',
-  voiceEnabled = false,
-  onVoiceTranscript
+  voiceEnabled = false
 }) => {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -41,17 +39,21 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
+      recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
         let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+        for (let i = 0; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            transcript += event.results[i][0].transcript;
+          }
         }
-        setInput(prev => prev + transcript);
-        if (onVoiceTranscript) {
-          onVoiceTranscript(transcript);
+        if (transcript) {
+          setInput(prev => {
+            const newInput = prev ? prev + ' ' + transcript : transcript;
+            return newInput;
+          });
         }
       };
 
@@ -63,7 +65,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         setIsListening(false);
       };
     }
-  }, [onVoiceTranscript]);
+  }, []);
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
