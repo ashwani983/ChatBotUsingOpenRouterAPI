@@ -314,10 +314,8 @@ app.post('/api/chat', async (req, res) => {
     db.run('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)', [convId, 'assistant', assistantMessage]);
     
     const titleMessage = message.length > 30 ? message.substring(0, 30) + '...' : message;
-    if (message.length > 0) {
-      db.run('UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-        [titleMessage, convId]);
-    }
+    db.run('UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+      [titleMessage, convId]);
     
     saveDatabase();
 
@@ -368,7 +366,12 @@ app.get('/api/conversations/search', (req, res) => {
 });
 
 function stripHtml(html: string): string {
-  return html
+  if (!html) return '';
+  let text = html
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]+`/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[#*_~`>]/g, '')
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
@@ -378,6 +381,7 @@ function stripHtml(html: string): string {
     .replace(/&#39;/g, "'")
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+  return text;
 }
 
 app.get('/api/export/:id/markdown', (req, res) => {
