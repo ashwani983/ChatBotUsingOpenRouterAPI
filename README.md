@@ -4,44 +4,53 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 ![Chat Application Screenshot](screenshot/chatbot-using-the-operoute.png)
 
-## v3.0.0 Features
+## v4.0.0 Features
+
+### Canvas Editor
+- **Monaco Editor** - Full-featured code editor with syntax highlighting
+- **Multi-Language Support** - JavaScript, HTML, CSS
+- **Live Preview** - See your code run in real-time
+- **Console Output** - Debug with console.log support
+
+### Vision (Image Analysis)
+- **AI Image Analysis** - Free NVIDIA vision model
+- **Drag & Drop** - Easy image upload
+- **Clipboard Paste** - Paste images directly
+- **Analysis in Chat** - Results appear in conversation
+
+### File Handling
+- **File Upload** - PDF, images, code files
+- **Progress Indicator** - See upload progress
+- **File Preview** - View before downloading
+
+### Sharing
+- **Share Conversations** - Generate unique links
+- **Copy Link** - Easy sharing functionality
+- **View Tracking** - See how many views
+
+### UI Enhancements
+- **Toast Notifications** - Non-intrusive alerts
+- **Loading Skeletons** - Better loading states
+- **Smooth Animations** - Polished transitions
+- **Enhanced Empty States** - Better onboarding
 
 ### Voice Features
-- **Voice Input** - Click the microphone button to speak your message
-- **Text-to-Speech** - AI responses can be read aloud automatically
-- **Multiple Languages** - Support for 10+ interface languages
+- **Voice Input** - Click the microphone button to speak
+- **Text-to-Speech** - AI responses read aloud
+- **Multiple Languages** - 10+ interface languages
 
 ### Export & Search
-- **Conversation Search** - Find conversations by title or content
-- **Export Options** - Download conversations as Markdown, Text, or PDF
-- **Persistent History** - All conversations saved in SQLite database
-
-### UX Improvements
-- **Message Actions** - Copy, like/dislike, and regenerate responses
-- **Enhanced Code Blocks** - Language badges, copy button, syntax highlighting
-- **Improved Typing Indicator** - "AI is thinking..." with animation
+- **Conversation Search** - Find by title or content
+- **Export Options** - Markdown, Text, or PDF
+- **Persistent History** - SQLite database
 
 ### Keyboard Shortcuts
 - `Enter` - Send message
 - `Ctrl+Enter` - Send message
-- `Shift+Enter` - New line
 - `↑/↓` - Navigate input history
 - `Ctrl+Shift+N` - New conversation
 - `Escape` - Close modal
 - `?` - Show shortcuts
-
-### Accessibility
-- **Screen Reader Support** - ARIA labels and live regions
-- **Focus Management** - Keyboard navigation with focus traps
-- **Theme Support** - Dark/Light mode toggle
-
-### Settings
-- **AI Model Selection** - Switch between Llama, Gemma, Mistral, Phi-3, DeepSeek
-- **Temperature & Tokens** - Fine-tune response creativity
-- **System Prompt** - Customize AI behavior
-- **Voice Settings** - Toggle voice input/output
-- **Font Size** - Adjust interface font size
-- **Code Auto-Run** - Toggle for JavaScript code execution
 
 ---
 
@@ -54,7 +63,7 @@ Install the ChatBot CLI and start chatting in minutes:
 **Linux/macOS:**
 ```bash
 # Download and install the latest release
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
 
 # Configure your API key
 chatbot config
@@ -66,7 +75,7 @@ chatbot
 **Windows (PowerShell or Command Prompt):**
 ```powershell
 # Download and install the latest release
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
 
 # Configure your API key
 chatbot config
@@ -89,17 +98,17 @@ Then open http://localhost:3001 in your browser.
 
 **Linux:**
 ```bash
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
 ```
 
 **macOS:**
 ```bash
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
 ```
 
 **Windows:**
 ```cmd
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
 ```
 
 ### Step 2: Configure Your API Key
@@ -251,6 +260,16 @@ Other free models available on OpenRouter:
 ---
 
 ## Changelog
+
+### v4.0.0 (2026-03-28)
+- Added Canvas Editor with Monaco editor
+- Added Vision (Image Analysis) with NVIDIA model
+- Added File Upload/Download functionality
+- Added Conversation Sharing with links
+- Added Toast notifications
+- Added Loading skeletons
+- Added Lazy load images
+- Added Debounce hooks for performance
 
 ### v3.0.0 (2026-03-28)
 - Added voice input with Web Speech API
