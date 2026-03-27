@@ -5,6 +5,9 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import SettingsModal from './components/SettingsModal';
 import ShortcutsModal from './components/ShortcutsModal';
+import Canvas from './components/Canvas';
+import Toast from './components/Toast';
+import ShareModal from './components/ShareModal';
 import { jsPDF } from 'jspdf';
 
 function ChatApp() {
@@ -16,6 +19,7 @@ function ChatApp() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [models, setModels] = useState<AIModel[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
@@ -588,6 +592,18 @@ function ChatApp() {
                 </div>
               </div>
             )}
+            {currentConversationId && (
+              <button
+                onClick={() => setShareOpen(true)}
+                className={`p-2 ${hoverBg} rounded-lg transition-colors`}
+                title="Share conversation"
+                aria-label="Share conversation"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                </svg>
+              </button>
+            )}
             {settings.tts_enabled === 'true' && (
               <button
                 onClick={toggleSpeaking}
@@ -670,8 +686,19 @@ function ChatApp() {
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
       />
+      
+      <ShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        conversationId={currentConversationId}
+        conversationTitle={currentConversation?.title || ''}
+        theme={theme}
+      />
+      
+      <Canvas theme={theme} />
+      <Toast />
 
-      <div 
+      <div
         role="status" 
         aria-live="polite" 
         aria-atomic="true" 

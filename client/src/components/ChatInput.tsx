@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from 'react';
+import ImageUploader from './ImageUploader';
+import FileUploader from './FileUploader';
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
@@ -17,6 +19,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showImageUploader, setShowImageUploader] = useState(false);
+  const [showFileUploader, setShowFileUploader] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<any>(null);
   
@@ -135,6 +139,55 @@ const ChatInput: React.FC<ChatInputProps> = ({
             style={{ minHeight: '52px', maxHeight: '200px' }}
           />
           <div className="absolute right-2 bottom-2 flex items-center gap-2">
+            <button
+              onClick={() => {
+                setShowFileUploader(!showFileUploader);
+                setShowImageUploader(false);
+              }}
+              className={`p-2 rounded-lg transition-colors ${
+                showFileUploader
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-600 hover:bg-gray-500 text-white'
+              }`}
+              title="Upload Files"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </button>
+            <button
+              onClick={() => {
+                setShowImageUploader(!showImageUploader);
+                setShowFileUploader(false);
+              }}
+              className={`p-2 rounded-lg transition-colors ${
+                showImageUploader
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-600 hover:bg-gray-500 text-white'
+              }`}
+              title="Image Analysis"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </button>
             {voiceEnabled && (
               <button
                 onClick={isListening ? stopListening : startListening}
@@ -176,6 +229,33 @@ const ChatInput: React.FC<ChatInputProps> = ({
           Press Enter to send, Ctrl+Enter to send, ↑↓ for history
           {isListening && <span className="text-red-400 ml-2">● Listening...</span>}
         </p>
+
+        {showImageUploader && (
+          <div className="mt-4">
+            <ImageUploader
+              theme={theme}
+              onImageAnalyzed={(analysis) => {
+                setInput(prev => prev ? `${prev}\n\n[Image Analysis]\n${analysis}` : `[Image Analysis]\n${analysis}`);
+                setShowImageUploader(false);
+              }}
+              onClose={() => setShowImageUploader(false)}
+            />
+          </div>
+        )}
+
+        {showFileUploader && (
+          <div className="mt-4">
+            <FileUploader
+              theme={theme}
+              onFilesUploaded={(files) => {
+                const fileList = files.map(f => `[File: ${f.filename}](${f.url})`).join('\n');
+                setInput(prev => prev ? `${prev}\n\n${fileList}` : fileList);
+                setShowFileUploader(false);
+              }}
+              onClose={() => setShowFileUploader(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

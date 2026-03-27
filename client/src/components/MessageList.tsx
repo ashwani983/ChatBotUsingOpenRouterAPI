@@ -151,26 +151,69 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, theme = 
   const assistantText = theme === 'dark' ? 'text-white' : 'text-gray-900';
   const codeInlineBg = theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300';
 
-  if (messages.length === 0) {
+  const LoadingSkeleton = () => (
+    <div className="flex justify-start mb-4 animate-fade-in-up">
+      <div className={`max-w-[85%] ${assistantBg} ${assistantText} rounded-2xl px-5 py-3`}>
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 skeleton" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-24 rounded skeleton" />
+            <div className="space-y-1">
+              <div className="h-3 w-full rounded skeleton" />
+              <div className="h-3 w-4/5 rounded skeleton" />
+              <div className="h-3 w-3/5 rounded skeleton" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (messages.length === 0 && !isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-16 w-16 mx-auto mb-4 opacity-50"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1}
-              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            />
-          </svg>
-          <p className="text-lg">Start a conversation</p>
-          <p className="text-sm mt-2">Send a message to begin chatting with AI</p>
+      <div className="flex items-center justify-center h-full animate-fade-in-up">
+        <div className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} px-4`}>
+          <div className="relative mb-6">
+            <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            </div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-xl font-semibold mb-2">Start a conversation</p>
+          <p className="text-sm max-w-sm mx-auto">
+            Send a message to begin chatting with AI. Try asking questions, getting help with code, or brainstorming ideas.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {['Explain quantum computing', 'Write a Python script', 'Help me plan a trip'].map((suggestion, i) => (
+              <button
+                key={i}
+                className={`px-4 py-2 rounded-full text-sm transition-colors ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -261,34 +304,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, theme = 
       ))}
       
       {isLoading && messages.length > 0 && messages[messages.length - 1].role !== 'assistant' && (
-        <div className="flex justify-start">
-          <div className={`${assistantBg} ${assistantText} rounded-2xl px-5 py-3`}>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-white animate-pulse"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="flex gap-1.5">
-                <span className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-              </div>
-              <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                AI is thinking...
-              </span>
-            </div>
-          </div>
-        </div>
+        <LoadingSkeleton />
       )}
     </div>
   );

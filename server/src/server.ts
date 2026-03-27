@@ -337,6 +337,170 @@ app.post('/api/chat/reset', (req, res) => {
   res.json({ success: true });
 });
 
+app.post('/api/vision/analyze', async (req, res) => {
+  const { image, mimeType } = req.body;
+
+  if (!image) {
+    return res.status(400).json({ error: 'Image data is required' });
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'nvidia/nemotron-nano-12b-v2-vl',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Analyze this image and provide a detailed description. Include any text, objects, people, settings, or other notable elements you can identify.'
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType || 'image/jpeg'};base64,${image}`
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    const analysis = response.choices[0]?.message?.content || 'Unable to analyze image.';
+    res.json({ analysis });
+  } catch (error) {
+    console.error('Vision API error:', error);
+    res.status(500).json({ error: 'Failed to analyze image' });
+  }
+});
+
+const filesDir = path.join(dataDir, 'files');
+if (!fs.existsSync(filesDir)) {
+  fs.mkdirSync(filesDir, { recursive: true });
+}
+
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'text/plain',
+  'text/html',
+  'text/css',
+  'text/javascript',
+  'application/json',
+  'application/xml',
+  'text/markdown',
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+app.post('/api/files/upload', (req, res) => {
+  const { file, filename, mimeType } = req.body;
+
+  if (!file || !filename) {
+    return res.status(400).json({ error: 'File data and filename are required' });
+  }
+
+  if (!ALLOWED_TYPES.includes(mimeType)) {
+    return res.status(400).json({ error: 'File type not allowed' });
+  }
+
+  try {
+    const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const ext = path.extname(filename);
+    const storedFilename = `${fileId}${ext}`;
+    const filePath = path.join(filesDir, storedFilename);
+
+    const buffer = Buffer.from(file, 'base64');
+    
+    if (buffer.length > MAX_FILE_SIZE) {
+      return res.status(400).json({ error: 'File too large. Max size is 10MB.' });
+    }
+
+    fs.writeFileSync(filePath, buffer);
+
+    res.json({
+      id: fileId,
+      filename,
+      mimeType,
+      size: buffer.length,
+      url: `/api/files/${fileId}`
+    });
+  } catch (error) {
+    console.error('File upload error:', error);
+    res.status(500).json({ error: 'Failed to upload file' });
+  }
+});
+
+app.get('/api/files/:id', (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const files = fs.readdirSync(filesDir);
+    const file = files.find(f => f.startsWith(id));
+
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const filePath = path.join(filesDir, file);
+    const buffer = fs.readFileSync(filePath);
+    const ext = path.extname(file);
+    const mimeTypes: Record<string, string> = {
+      '.pdf': 'application/pdf',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.txt': 'text/plain',
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'text/javascript',
+      '.json': 'application/json',
+      '.xml': 'application/xml',
+      '.md': 'text/markdown',
+    };
+
+    const mimeType = mimeTypes[ext.toLowerCase()] || 'application/octet-stream';
+
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${file}"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('File download error:', error);
+    res.status(500).json({ error: 'Failed to download file' });
+  }
+});
+
+app.get('/api/files/:id/download', (req, res) => {
+  const { id } = req.params;
+  const originalFilename = req.query.name as string;
+
+  try {
+    const files = fs.readdirSync(filesDir);
+    const file = files.find(f => f.startsWith(id));
+
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const filePath = path.join(filesDir, file);
+    const buffer = fs.readFileSync(filePath);
+    const filename = originalFilename || file;
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('File download error:', error);
+    res.status(500).json({ error: 'Failed to download file' });
+  }
+});
+
 app.get('/api/conversations/search', (req, res) => {
   const q = (req.query.q as string || '').toLowerCase();
   
@@ -442,6 +606,86 @@ app.get('/api/export/:id/text', (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.txt"`);
   res.send(text);
+});
+
+db.run(`
+  CREATE TABLE IF NOT EXISTS shared_conversations (
+    id TEXT PRIMARY KEY,
+    conversation_id INTEGER NOT NULL,
+    view_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+  )
+`);
+
+function generateShareId(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+app.post('/api/share', (req, res) => {
+  const { conversationId } = req.body;
+
+  if (!conversationId) {
+    return res.status(400).json({ error: 'Conversation ID is required' });
+  }
+
+  const convResult = db.exec('SELECT id FROM conversations WHERE id = ?', [conversationId]);
+  if (convResult.length === 0 || convResult[0].values.length === 0) {
+    return res.status(404).json({ error: 'Conversation not found' });
+  }
+
+  const existingShare = db.exec('SELECT id FROM shared_conversations WHERE conversation_id = ?', [conversationId]);
+  if (existingShare.length > 0 && existingShare[0].values.length > 0) {
+    const shareId = existingShare[0].values[0][0] as string;
+    return res.json({ shareId, url: `/shared/${shareId}` });
+  }
+
+  const shareId = generateShareId();
+  db.run('INSERT INTO shared_conversations (id, conversation_id) VALUES (?, ?)', [shareId, conversationId]);
+  saveDatabase();
+
+  res.json({ shareId, url: `/shared/${shareId}` });
+});
+
+app.get('/api/shared/:id', (req, res) => {
+  const { id } = req.params;
+
+  const shareResult = db.exec('SELECT conversation_id, view_count FROM shared_conversations WHERE id = ?', [id]);
+  if (shareResult.length === 0 || shareResult[0].values.length === 0) {
+    return res.status(404).json({ error: 'Shared conversation not found' });
+  }
+
+  const share = shareResult[0].values[0];
+  const conversationId = share[0] as number;
+
+  db.run('UPDATE shared_conversations SET view_count = view_count + 1 WHERE id = ?', [id]);
+  saveDatabase();
+
+  const convResult = db.exec('SELECT title, created_at FROM conversations WHERE id = ?', [conversationId]);
+  if (convResult.length === 0 || convResult[0].values.length === 0) {
+    return res.status(404).json({ error: 'Conversation not found' });
+  }
+
+  const conv = convResult[0].values[0];
+  const msgResult = db.exec('SELECT role, content, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [conversationId]);
+
+  const messages = msgResult.length > 0 ? msgResult[0].values.map((row: any) => ({
+    role: row[0],
+    content: row[1],
+    created_at: row[2]
+  })) : [];
+
+  res.json({
+    title: conv[0],
+    created_at: conv[1],
+    messages,
+    viewCount: (share[1] as number) + 1
+  });
 });
 
 // Static files
