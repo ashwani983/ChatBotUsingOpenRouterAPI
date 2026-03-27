@@ -245,8 +245,21 @@ function ChatApp() {
     }
   };
 
+  const sanitizeFilename = (name: string): string => {
+    if (!name) return 'conversation';
+    return name
+      .replace(/<[^>]*>/g, '')
+      .replace(/[<>:"/\\|?*]/g, '_')
+      .replace(/[\x00-\x1f]/g, '')
+      .replace(/_{2,}/g, '_')
+      .replace(/^_|_$/g, '')
+      .substring(0, 100) || 'conversation';
+  };
+
   const exportConversation = async (format: 'markdown' | 'text' | 'pdf') => {
     if (!currentConversationId) return;
+    
+    const filename = sanitizeFilename(currentConversation?.title || 'conversation');
     
     if (format === 'pdf') {
       const doc = new jsPDF();
@@ -257,7 +270,7 @@ function ChatApp() {
       
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text(currentConversation?.title || 'Conversation', margin, y);
+      doc.text(filename, margin, y);
       y += 10;
       
       doc.setFontSize(10);
@@ -295,7 +308,7 @@ function ChatApp() {
         y += 8;
       }
       
-      doc.save(`${currentConversation?.title || 'conversation'}.pdf`);
+      doc.save(`${filename}.pdf`);
       return;
     }
     
@@ -305,7 +318,7 @@ function ChatApp() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentConversation?.title || 'conversation'}.${format === 'markdown' ? 'md' : 'txt'}`;
+      a.download = `${filename}.${format === 'markdown' ? 'md' : 'txt'}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

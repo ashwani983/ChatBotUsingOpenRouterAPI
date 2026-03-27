@@ -530,12 +530,54 @@ app.get('/api/conversations/search', (req, res) => {
   res.json(conversations);
 });
 
+function decodeHtmlEntities(text: string): string {
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&#39;': "'",
+    '&#x27;': "'",
+    '&#x2F;': '/',
+    '&nbsp;': ' ',
+    '&ndash;': '–',
+    '&mdash;': '—',
+    '&hellip;': '…',
+    '&copy;': '©',
+    '&reg;': '®',
+    '&trade;': '™',
+  };
+  
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, 'gi'), char);
+  }
+  
+  decoded = decoded.replace(/&#([0-9]+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+  decoded = decoded.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  
+  return decoded;
+}
+
+function sanitizeFilename(name: string): string {
+  if (!name) return 'conversation';
+  return name
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>:"/\\|?*]/g, '_')
+    .replace(/[\x00-\x1f]/g, '')
+    .replace(/_{2,}/g, '_')
+    .replace(/^_|_$/g, '')
+    .substring(0, 100) || 'conversation';
+}
+
 function stripHtml(html: string): string {
   if (!html) return '';
-  let text = html
+  let text = decodeHtmlEntities(html);
+  text = text
     .replace(/<[^>]*>/g, '')
-    .replace(/```[\s\S]*?```/g, (match) => match.replace(/<[^>]*>/g, ''))
-    .replace(/`[^`]+`/g, (match) => match.replace(/<[^>]*>/g, ''))
+    .replace(/```[\s\S]*?```/gs, '')
+    .replace(/`[^`]+`/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/[#*_~`>]/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -558,7 +600,7 @@ app.get('/api/export/:id/markdown', (req, res) => {
   }
   
   const conv = convResult[0].values[0];
-  const convTitle = conv[0] as string;
+  const convTitle = decodeHtmlEntities(conv[0] as string);
   const createdAt = conv[1] as string;
   
   const msgResult = db.exec('SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
@@ -576,8 +618,9 @@ app.get('/api/export/:id/markdown', (req, res) => {
     markdown += `${label}:\n\n${cleanContent}\n\n---\n\n`;
   }
   
+  const filename = sanitizeFilename(convTitle);
   res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.md"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}.md"; filename*=UTF-8''${encodeURIComponent(filename)}.md`);
   res.send(markdown);
 });
 
@@ -588,7 +631,7 @@ app.get('/api/export/:id/text', (req, res) => {
   }
   
   const conv = convResult[0].values[0];
-  const convTitle = conv[0] as string;
+  const convTitle = decodeHtmlEntities(conv[0] as string);
   const createdAt = conv[1] as string;
   
   const msgResult = db.exec('SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
@@ -606,8 +649,9 @@ app.get('/api/export/:id/text', (req, res) => {
     text += `[${label}]\n${cleanContent}\n\n${'─'.repeat(40)}\n\n`;
   }
   
+  const filename = sanitizeFilename(convTitle);
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.txt"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}.txt"; filename*=UTF-8''${encodeURIComponent(filename)}.txt`);
   res.send(text);
 });
 
@@ -618,7 +662,7 @@ app.get('/api/export/:id/json', (req, res) => {
   }
   
   const conv = convResult[0].values[0];
-  const convTitle = conv[0] as string;
+  const convTitle = decodeHtmlEntities(conv[0] as string);
   const createdAt = conv[1] as string;
   
   const msgResult = db.exec('SELECT role, content, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
@@ -636,8 +680,9 @@ app.get('/api/export/:id/json', (req, res) => {
     messages
   };
   
+  const filename = sanitizeFilename(convTitle);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.json"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}.json"; filename*=UTF-8''${encodeURIComponent(filename)}.json`);
   res.json(exportData);
 });
 
