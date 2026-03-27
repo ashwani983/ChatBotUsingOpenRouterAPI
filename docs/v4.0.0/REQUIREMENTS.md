@@ -2,38 +2,28 @@
 
 ## Functional Requirements
 
-### Image Generation (DALL-E Integration)
-- [ ] Generate images from text prompts
-- [ ] Image style selection (realistic, artistic, cartoon, etc.)
-- [ ] Image size options (256x256, 512x512, 1024x1024)
-- [ ] Save generated images to conversation
-- [ ] Regenerate/edit existing images
-
-### Vision (Image Analysis)
-- [ ] Upload images for analysis
-- [ ] Drag & drop image support
-- [ ] Paste image from clipboard
-- [ ] Multi-image analysis
-- [ ] Describe/explain uploaded images
-
-### Canvas Editor
-- [ ] Interactive code editor panel
-- [ ] Syntax highlighting for multiple languages
+### Canvas Editor (Code Execution)
+- [ ] Interactive code editor panel (Monaco)
+- [ ] JavaScript code execution sandbox
 - [ ] Live preview for HTML/CSS/JS
+- [ ] Console output display
 - [ ] Split view (code + preview)
-- [ ] Code execution (JavaScript sandbox)
+- [ ] Language selector
+- [ ] Collapsible panel
+
+### Vision (Image Analysis) - Free with OpenRouter
+- [ ] Upload images for analysis (drag & drop, paste)
+- [ ] Use free vision model: `nvidia/nemotron-nano-12b-v2-vl`
+- [ ] Image description and explain
+- [ ] Multi-image analysis
+- [ ] OCR for documents
 
 ### File Handling
 - [ ] PDF upload and analysis
 - [ ] Document summarization
+- [ ] Code file upload (.py, .js, .ts, etc.)
 - [ ] File download from AI responses
-- [ ] Support for code files (.py, .js, .ts, etc.)
-
-### Web Search Integration
-- [ ] Real-time web search capability
-- [ ] Search results as citations
-- [ ] Browse web pages for up-to-date info
-- [ ] Toggle search on/off
+- [ ] Support for images, text files
 
 ### Sharing & Collaboration
 - [ ] Share conversation via public link
@@ -42,24 +32,23 @@
 - [ ] QR code for shared links
 
 ### Enhanced UI/UX
-- [ ] Improved message grouping
-- [ ] Branch conversations (tree view)
+- [ ] Message grouping by date
+- [ ] Toast notifications
+- [ ] Loading skeletons
 - [ ] Better mobile responsiveness
 - [ ] Smooth animations
-- [ ] Toast notifications
-- [ ] Drag to resize panels
+- [ ] Empty states with suggestions
+- [ ] Panel resize (drag)
 
 ## Non-Functional Requirements
 
 ### Performance
 - [ ] Lazy loading for large conversations
 - [ ] Image compression before upload
-- [ ] Debounced search
 - [ ] Virtual scrolling for long chats
+- [ ] Debounced inputs
 
 ### User Experience
 - [ ] Onboarding tips for new features
 - [ ] Feature tooltips
 - [ ] Keyboard shortcut hints
-- [ ] Loading skeletons
-- [ ] Empty states with suggestions

@@ -1,53 +1,37 @@
 # Version 4.0.0 - Tasks
 
-## Phase 1: Image Generation (DALL-E)
+## Phase 1: Canvas Editor
 
 ### Backend
-- [ ] Add DALL-E integration to OpenRouter
-- [ ] Create `/api/images/generate` endpoint
-- [ ] Store generated images metadata
-- [ ] Add image model to settings
+- [ ] Create sandbox endpoint (optional, can be client-side)
+- [ ] Add code execution timeout handling
 
 ### Frontend
-- [ ] Create image generator panel/modal
-- [ ] Add style and size selectors
-- [ ] Display generated images in chat
-- [ ] Add regenerate/edit options
-- [ ] Image gallery in conversation
+- [ ] Integrate Monaco editor
+- [ ] Create collapsible canvas panel
+- [ ] JavaScript sandbox execution
+- [ ] Live preview iframe
+- [ ] Console output panel
+- [ ] Language selector
+- [ ] Run/Clear buttons
+- [ ] Split pane layout
 
 ## Phase 2: Vision (Image Analysis)
 
 ### Backend
-- [ ] Create `/api/images/upload` endpoint
+- [ ] Create `/api/vision/analyze` endpoint
+- [ ] Integrate free vision model (NVIDIA Nemotron VL)
 - [ ] Support image formats (jpg, png, webp, gif)
 - [ ] Image compression for large files
-- [ ] Vision analysis integration
 
 ### Frontend
 - [ ] Drag & drop upload zone
 - [ ] Clipboard paste support
 - [ ] Image preview thumbnails
-- [ ] Multi-image upload UI
-- [ ] Analysis result display
+- [ ] Vision toggle in input area
+- [ ] Analysis result display in chat
 
-## Phase 3: Canvas Editor
-
-### Backend
-- [ ] Add code execution sandbox
-- [ ] Support JavaScript execution
-- [ ] Console output capture
-- [ ] Timeout handling
-
-### Frontend
-- [ ] Integrate Monaco editor
-- [ ] Split pane layout
-- [ ] Language selector
-- [ ] Live preview iframe
-- [ ] Run/Stop controls
-- [ ] Console output panel
-- [ ] Collapsible panel
-
-## Phase 4: File Handling
+## Phase 3: File Handling
 
 ### Backend
 - [ ] Create `/api/files/upload` endpoint
@@ -61,21 +45,7 @@
 - [ ] File preview
 - [ ] Download buttons
 
-## Phase 5: Web Search
-
-### Backend
-- [ ] Integrate search API
-- [ ] Create `/api/search` endpoint
-- [ ] Result caching
-- [ ] Citation formatting
-
-### Frontend
-- [ ] Search toggle switch
-- [ ] Results display with citations
-- [ ] Source links
-- [ ] Loading state
-
-## Phase 6: Sharing
+## Phase 4: Sharing
 
 ### Backend
 - [ ] Create `/api/share` endpoint
@@ -87,13 +57,12 @@
 - [ ] Share button in header
 - [ ] Copy link functionality
 - [ ] QR code generation
-- [ ] Shared conversation view
+- [ ] Shared conversation view (read-only)
 
-## Phase 7: UI Enhancements
+## Phase 5: UI Enhancements
 
 ### Frontend
 - [ ] Message grouping by date
-- [ ] Branch conversations UI
 - [ ] Toast notifications
 - [ ] Loading skeletons
 - [ ] Better mobile layout
@@ -101,14 +70,12 @@
 - [ ] Smooth animations
 - [ ] Empty states
 
-## Phase 8: Polish
+## Phase 6: Polish
 
 ### Testing
-- [ ] Image generation flow
-- [ ] Vision upload/analysis
 - [ ] Canvas code execution
+- [ ] Vision upload/analysis
 - [ ] File upload/download
-- [ ] Search integration
 - [ ] Share functionality
 
 ### Performance
