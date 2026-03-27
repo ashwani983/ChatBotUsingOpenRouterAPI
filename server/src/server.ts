@@ -110,7 +110,8 @@ if (!apiKey) {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 const AVAILABLE_MODELS = [
   { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', provider: 'Meta' },
@@ -532,17 +533,19 @@ app.get('/api/conversations/search', (req, res) => {
 function stripHtml(html: string): string {
   if (!html) return '';
   let text = html
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]+`/g, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/```[\s\S]*?```/g, (match) => match.replace(/<[^>]*>/g, ''))
+    .replace(/`[^`]+`/g, (match) => match.replace(/<[^>]*>/g, ''))
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/[#*_~`>]/g, '')
-    .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#[0-9]+;/g, '')
+    .replace(/\s+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   return text;
@@ -608,84 +611,34 @@ app.get('/api/export/:id/text', (req, res) => {
   res.send(text);
 });
 
-db.run(`
-  CREATE TABLE IF NOT EXISTS shared_conversations (
-    id TEXT PRIMARY KEY,
-    conversation_id INTEGER NOT NULL,
-    view_count INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-  )
-`);
-
-function generateShareId(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
-app.post('/api/share', (req, res) => {
-  const { conversationId } = req.body;
-
-  if (!conversationId) {
-    return res.status(400).json({ error: 'Conversation ID is required' });
-  }
-
-  const convResult = db.exec('SELECT id FROM conversations WHERE id = ?', [conversationId]);
+app.get('/api/export/:id/json', (req, res) => {
+  const convResult = db.exec('SELECT title, created_at FROM conversations WHERE id = ?', [req.params.id]);
   if (convResult.length === 0 || convResult[0].values.length === 0) {
     return res.status(404).json({ error: 'Conversation not found' });
   }
-
-  const existingShare = db.exec('SELECT id FROM shared_conversations WHERE conversation_id = ?', [conversationId]);
-  if (existingShare.length > 0 && existingShare[0].values.length > 0) {
-    const shareId = existingShare[0].values[0][0] as string;
-    return res.json({ shareId, url: `/shared/${shareId}` });
-  }
-
-  const shareId = generateShareId();
-  db.run('INSERT INTO shared_conversations (id, conversation_id) VALUES (?, ?)', [shareId, conversationId]);
-  saveDatabase();
-
-  res.json({ shareId, url: `/shared/${shareId}` });
-});
-
-app.get('/api/shared/:id', (req, res) => {
-  const { id } = req.params;
-
-  const shareResult = db.exec('SELECT conversation_id, view_count FROM shared_conversations WHERE id = ?', [id]);
-  if (shareResult.length === 0 || shareResult[0].values.length === 0) {
-    return res.status(404).json({ error: 'Shared conversation not found' });
-  }
-
-  const share = shareResult[0].values[0];
-  const conversationId = share[0] as number;
-
-  db.run('UPDATE shared_conversations SET view_count = view_count + 1 WHERE id = ?', [id]);
-  saveDatabase();
-
-  const convResult = db.exec('SELECT title, created_at FROM conversations WHERE id = ?', [conversationId]);
-  if (convResult.length === 0 || convResult[0].values.length === 0) {
-    return res.status(404).json({ error: 'Conversation not found' });
-  }
-
+  
   const conv = convResult[0].values[0];
-  const msgResult = db.exec('SELECT role, content, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [conversationId]);
-
+  const convTitle = conv[0] as string;
+  const createdAt = conv[1] as string;
+  
+  const msgResult = db.exec('SELECT role, content, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
   const messages = msgResult.length > 0 ? msgResult[0].values.map((row: any) => ({
     role: row[0],
-    content: row[1],
+    content: stripHtml(row[1]),
     created_at: row[2]
   })) : [];
-
-  res.json({
-    title: conv[0],
-    created_at: conv[1],
-    messages,
-    viewCount: (share[1] as number) + 1
-  });
+  
+  const exportData = {
+    version: '1.0',
+    title: convTitle,
+    created_at: createdAt,
+    exported_at: new Date().toISOString(),
+    messages
+  };
+  
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.json"`);
+  res.json(exportData);
 });
 
 // Static files

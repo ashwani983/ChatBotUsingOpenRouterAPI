@@ -9,6 +9,7 @@ interface MessageListProps {
   isLoading: boolean;
   theme?: 'light' | 'dark';
   onRegenerate?: () => void;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 const CodeBlock: React.FC<{ language: string; code: string; theme: 'light' | 'dark' }> = ({ language, code, theme }) => {
@@ -145,7 +146,7 @@ const MessageActions: React.FC<{
   );
 };
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, theme = 'dark', onRegenerate }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, theme = 'dark', onRegenerate, onSuggestionClick }) => {
   const userBg = theme === 'dark' ? 'bg-blue-600' : 'bg-blue-600';
   const assistantBg = theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200';
   const assistantText = theme === 'dark' ? 'text-white' : 'text-gray-900';
@@ -204,6 +205,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isLoading, theme = 
             {['Explain quantum computing', 'Write a Python script', 'Help me plan a trip'].map((suggestion, i) => (
               <button
                 key={i}
+                onClick={() => onSuggestionClick?.(suggestion)}
                 className={`px-4 py-2 rounded-full text-sm transition-colors ${
                   theme === 'dark' 
                     ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
