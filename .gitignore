@@ -59,3 +59,7 @@ coverage/
 tmp/
 temp/
 
+# Release artifacts
+*.tgz
+ai-chatbot*.tgz
+
