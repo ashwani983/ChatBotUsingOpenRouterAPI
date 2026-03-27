@@ -63,7 +63,12 @@ async function initDatabase() {
     ['model', 'meta-llama/llama-3.1-8b-instruct'],
     ['temperature', '0.7'],
     ['max_tokens', '2048'],
-    ['system_prompt', 'You are a helpful AI assistant. You provide clear, concise, and accurate responses. When providing code examples, use proper formatting and explain your reasoning.']
+    ['system_prompt', 'You are a helpful AI assistant. You provide clear, concise, and accurate responses. When providing code examples, use proper formatting and explain your reasoning.'],
+    ['voice_enabled', 'false'],
+    ['tts_enabled', 'false'],
+    ['language', 'en-US'],
+    ['font_size', '16'],
+    ['code_auto_run', 'false']
   ];
   
   for (const [key, value] of defaultSettings) {
@@ -332,6 +337,92 @@ app.post('/api/chat/reset', (req, res) => {
     saveDatabase();
   }
   res.json({ success: true });
+});
+
+app.get('/api/conversations/search', (req, res) => {
+  const q = (req.query.q as string || '').toLowerCase();
+  
+  const convResult = db.exec('SELECT id, title, created_at, updated_at FROM conversations ORDER BY updated_at DESC');
+  let conversations = convResult.length > 0 ? convResult[0].values.map((row: any) => ({
+    id: row[0],
+    title: row[1],
+    created_at: row[2],
+    updated_at: row[3]
+  })) : [];
+  
+  if (q) {
+    const msgResult = db.exec('SELECT conversation_id, content FROM messages WHERE LOWER(content) LIKE ?', [`%${q}%`]);
+    const matchingConvIds = new Set<number>();
+    if (msgResult.length > 0) {
+      for (const row of msgResult[0].values) {
+        matchingConvIds.add(row[0] as number);
+      }
+    }
+    
+    conversations = conversations.filter((c: { id: number; title: string }) => 
+      c.title.toLowerCase().includes(q) || matchingConvIds.has(c.id)
+    );
+  }
+  
+  res.json(conversations);
+});
+
+app.get('/api/export/:id/markdown', (req, res) => {
+  const convResult = db.exec('SELECT title, created_at FROM conversations WHERE id = ?', [req.params.id]);
+  if (convResult.length === 0 || convResult[0].values.length === 0) {
+    return res.status(404).json({ error: 'Conversation not found' });
+  }
+  
+  const conv = convResult[0].values[0];
+  const convTitle = conv[0] as string;
+  const createdAt = conv[1] as string;
+  
+  const msgResult = db.exec('SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
+  const messages = msgResult.length > 0 ? msgResult[0].values.map((row: any) => ({
+    role: row[0],
+    content: row[1]
+  })) : [];
+  
+  let markdown = `# ${convTitle}\n\n`;
+  markdown += `*Created: ${new Date(createdAt).toLocaleString()}*\n\n---\n\n`;
+  
+  for (const msg of messages) {
+    const label = msg.role === 'user' ? '**User**' : '**Assistant**';
+    markdown += `${label}:\n\n${msg.content}\n\n---\n\n`;
+  }
+  
+  res.setHeader('Content-Type', 'text/markdown');
+  res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.md"`);
+  res.send(markdown);
+});
+
+app.get('/api/export/:id/text', (req, res) => {
+  const convResult = db.exec('SELECT title, created_at FROM conversations WHERE id = ?', [req.params.id]);
+  if (convResult.length === 0 || convResult[0].values.length === 0) {
+    return res.status(404).json({ error: 'Conversation not found' });
+  }
+  
+  const conv = convResult[0].values[0];
+  const convTitle = conv[0] as string;
+  const createdAt = conv[1] as string;
+  
+  const msgResult = db.exec('SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC', [req.params.id]);
+  const messages = msgResult.length > 0 ? msgResult[0].values.map((row: any) => ({
+    role: row[0],
+    content: row[1]
+  })) : [];
+  
+  let text = `${convTitle}\n${'='.repeat(convTitle.length)}\n\n`;
+  text += `Created: ${new Date(createdAt).toLocaleString()}\n\n`;
+  
+  for (const msg of messages) {
+    const label = msg.role === 'user' ? 'USER' : 'ASSISTANT';
+    text += `[${label}]\n${msg.content}\n\n${'─'.repeat(40)}\n\n`;
+  }
+  
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${convTitle.replace(/[^a-z0-9]/gi, '_')}.txt"`);
+  res.send(text);
 });
 
 // Static files

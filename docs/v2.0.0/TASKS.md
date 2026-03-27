@@ -1,81 +1,81 @@
-# Version 2.0.0 - Tasks
+# Version 2.0.0 - Tasks ✅ DONE
 
 ## Phase 1: Database & Backend (Week 1)
 
 ### Database Setup
-- [ ] Add better-sqlite3 dependency
-- [ ] Create database initialization script
-- [ ] Design schema (conversations, messages, settings)
-- [ ] Create database migrations
+- [x] Add better-sqlite3 dependency
+- [x] Create database initialization script
+- [x] Design schema (conversations, messages, settings)
+- [x] Create database migrations
 
 ### Backend API
-- [ ] Implement /api/conversations endpoints
-- [ ] Implement /api/messages endpoints
-- [ ] Implement /api/settings endpoints
-- [ ] Implement /api/models endpoint
-- [ ] Implement /api/health endpoint
+- [x] Implement /api/conversations endpoints
+- [x] Implement /api/messages endpoints
+- [x] Implement /api/settings endpoints
+- [x] Implement /api/models endpoint
+- [x] Implement /api/health endpoint
 
 ### Server Updates
-- [ ] Update server to use compiled JS with SQLite
-- [ ] Add model switching logic
-- [ ] Add settings management
-- [ ] Add logging system
+- [x] Update server to use compiled JS with SQLite
+- [x] Add model switching logic
+- [x] Add settings management
+- [x] Add logging system
 
 ## Phase 2: Frontend UI (Week 2)
 
 ### Theme Support
-- [ ] Create theme context
-- [ ] Add dark/light theme styles
-- [ ] Implement theme toggle
-- [ ] Persist theme in localStorage
+- [x] Create theme context
+- [x] Add dark/light theme styles
+- [x] Implement theme toggle
+- [x] Persist theme in localStorage
 
 ### Conversation Management
-- [ ] Create sidebar with conversation list
-- [ ] Add new conversation button
-- [ ] Add conversation rename
-- [ ] Add conversation delete (X icon)
-- [ ] Add clear all history
-- [ ] Add message delete
+- [x] Create sidebar with conversation list
+- [x] Add new conversation button
+- [x] Add conversation rename
+- [x] Add conversation delete (X icon)
+- [x] Add clear all history
+- [x] Add message delete
 
 ### Settings Panel
-- [ ] Create settings modal/panel
-- [ ] Add model selector dropdown
-- [ ] Add temperature slider
-- [ ] Add max tokens input
-- [ ] Add system prompt textarea
+- [x] Create settings modal/panel
+- [x] Add model selector dropdown
+- [x] Add temperature slider
+- [x] Add max tokens input
+- [x] Add system prompt textarea
 
 ### UI Enhancements
-- [ ] Add typing indicator
-- [ ] Add message status
-- [ ] Add copy to clipboard
-- [ ] Improve loading states
-- [ ] Add keyboard shortcuts
+- [x] Add typing indicator
+- [x] Add message status
+- [x] Add copy to clipboard
+- [x] Improve loading states
+- [x] Add keyboard shortcuts
 
 ## Phase 3: CLI Commands (Week 3)
 
 ### New CLI Commands
-- [ ] Implement `chatbot status`
-- [ ] Implement `chatbot stop`
-- [ ] Implement `chatbot restart`
-- [ ] Implement `chatbot logs`
-- [ ] Add port flag: `--port`
+- [x] Implement `chatbot status`
+- [x] Implement `chatbot stop`
+- [x] Implement `chatbot restart`
+- [x] Implement `chatbot logs`
+- [x] Add port flag: `--port`
 
 ### Server Management
-- [ ] Add PID file for server
-- [ ] Add status check functionality
-- [ ] Add graceful shutdown
+- [x] Add PID file for server
+- [x] Add status check functionality
+- [x] Add graceful shutdown
 
 ## Phase 4: Testing & Polish (Week 4)
 
 ### Testing
-- [ ] Test all API endpoints
-- [ ] Test conversation CRUD
-- [ ] Test settings persistence
-- [ ] Test theme switching
-- [ ] Test error handling
+- [x] Test all API endpoints
+- [x] Test conversation CRUD
+- [x] Test settings persistence
+- [x] Test theme switching
+- [x] Test error handling
 
 ### Polish
-- [ ] Optimize bundle size
-- [ ] Improve error messages
-- [ ] Update documentation
-- [ ] Create migration guide
+- [x] Optimize bundle size
+- [x] Improve error messages
+- [x] Update documentation
+- [x] Create migration guide

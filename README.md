@@ -4,14 +4,46 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 ![Chat Application Screenshot](screenshot/chatbot-using-the-operoute.png)
 
-## v2.0.0 Features
+## v3.0.0 Features
 
-- **Multiple AI Models** - Switch between Llama, Gemma, Mistral, Phi-3, DeepSeek
-- **Chat History** - Persistent conversations stored in SQLite
-- **Dark/Light Theme** - Toggle between dark and light modes
-- **Settings Panel** - Customize temperature, max tokens, system prompt
-- **Server Management** - `chatbot start`, `stop`, `status`, `restart` commands
-- **Custom Port** - `chatbot --port 3002`
+### Voice Features
+- **Voice Input** - Click the microphone button to speak your message
+- **Text-to-Speech** - AI responses can be read aloud automatically
+- **Multiple Languages** - Support for 10+ interface languages
+
+### Export & Search
+- **Conversation Search** - Find conversations by title or content
+- **Export Options** - Download conversations as Markdown, Text, or PDF
+- **Persistent History** - All conversations saved in SQLite database
+
+### UX Improvements
+- **Message Actions** - Copy, like/dislike, and regenerate responses
+- **Enhanced Code Blocks** - Language badges, copy button, syntax highlighting
+- **Improved Typing Indicator** - "AI is thinking..." with animation
+
+### Keyboard Shortcuts
+- `Enter` - Send message
+- `Ctrl+Enter` - Send message
+- `Shift+Enter` - New line
+- `↑/↓` - Navigate input history
+- `Ctrl+Shift+N` - New conversation
+- `Escape` - Close modal
+- `?` - Show shortcuts
+
+### Accessibility
+- **Screen Reader Support** - ARIA labels and live regions
+- **Focus Management** - Keyboard navigation with focus traps
+- **Theme Support** - Dark/Light mode toggle
+
+### Settings
+- **AI Model Selection** - Switch between Llama, Gemma, Mistral, Phi-3, DeepSeek
+- **Temperature & Tokens** - Fine-tune response creativity
+- **System Prompt** - Customize AI behavior
+- **Voice Settings** - Toggle voice input/output
+- **Font Size** - Adjust interface font size
+- **Code Auto-Run** - Toggle for JavaScript code execution
+
+---
 
 ## Quick Start (CLI)
 
@@ -22,7 +54,7 @@ Install the ChatBot CLI and start chatting in minutes:
 **Linux/macOS:**
 ```bash
 # Download and install the latest release
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
 
 # Configure your API key
 chatbot config
@@ -34,7 +66,7 @@ chatbot
 **Windows (PowerShell or Command Prompt):**
 ```powershell
 # Download and install the latest release
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
 
 # Configure your API key
 chatbot config
@@ -57,17 +89,17 @@ Then open http://localhost:3001 in your browser.
 
 **Linux:**
 ```bash
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
 ```
 
 **macOS:**
 ```bash
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
 ```
 
 **Windows:**
 ```cmd
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v2.0.0/ai-chatbot-cli-2.0.0.tgz
+npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v3.0.0/ai-chatbot-cli-3.0.0.tgz
 ```
 
 ### Step 2: Configure Your API Key
@@ -122,8 +154,15 @@ Press `Ctrl+C` in the terminal to stop the server.
 | Command | Description |
 |---------|-------------|
 | `chatbot` | Start the ChatBot server |
+| `chatbot start` | Start the ChatBot server |
+| `chatbot stop` | Stop the running server |
+| `chatbot status` | Show server status |
+| `chatbot restart` | Restart the server |
 | `chatbot config` | Configure API key interactively |
 | `chatbot help` | Show help message |
+
+**Options:**
+- `--port <number>` - Specify port (default: 3001)
 
 ---
 
@@ -142,7 +181,7 @@ If the `chatbot` command is not found after installation, you may need to:
 ### Port Already in Use
 If port 3001 is in use, you can:
 1. Kill the process using port 3001, or
-2. Set a different port: `PORT=3002 chatbot`
+2. Set a different port: `chatbot --port 3002`
 
 ### Server Not Starting
 Make sure you have:
@@ -167,10 +206,16 @@ cd ChatBotUsingOpenRouterAPI
 
 2. Install all dependencies:
 ```bash
-npm run install:all
+cd server && npm install
+cd ../client && npm install
 ```
 
-3. Configure environment variables:
+3. Build the project:
+```bash
+npm run build
+```
+
+4. Configure environment variables:
 Edit `server/.env` and add your OpenRouter API key:
 ```
 OPENROUTER_API_KEY=your_api_key_here
@@ -185,7 +230,8 @@ chatbot
 
 Or for development:
 ```bash
-npm run dev
+npm run dev:server  # Start server with hot reload
+npm run dev:client  # Start client dev server
 ```
 
 Open http://localhost:3001 in your browser.
@@ -194,20 +240,48 @@ Open http://localhost:3001 in your browser.
 
 ## Available Free Models
 
-The default model is `meta-llama/llama-3.1-8b-instruct`. You can change it in `server/src/server.ts`:
-
-```typescript
-const stream = await openai.chat.completions.create({
-  model: 'meta-llama/llama-3.1-8b-instruct',  // Change this
-  // other options...
-});
-```
+The default model is `meta-llama/llama-3.1-8b-instruct`. You can change it in the Settings panel:
 
 Other free models available on OpenRouter:
 - `google/gemma-2-9b-it`
 - `mistralai/mistral-7b-instruct`
 - `microsoft/phi-3-mini-128k-instruct`
 - `deepseek/deepseek-chat`
+
+---
+
+## Changelog
+
+### v3.0.0 (2026-03-28)
+- Added voice input with Web Speech API
+- Added text-to-speech for AI responses
+- Added conversation search
+- Added export as Markdown/Text/PDF
+- Added message reactions (like/dislike)
+- Added regenerate response feature
+- Added enhanced code blocks with copy button
+- Added keyboard shortcuts modal
+- Added input history navigation
+- Added font size adjustment
+- Added accessibility improvements (ARIA, focus management)
+- Added screen reader support
+
+### v2.0.0 (2024-03-18)
+- Added SQLite database for persistence
+- Added dark/light theme toggle
+- Added settings panel with model selection
+- Added temperature and max tokens controls
+- Added system prompt customization
+- Added CLI commands (start, stop, status, restart)
+- Added conversation management (rename, delete, clear all)
+- Added message delete functionality
+
+### v1.0.0 (2024-03-17)
+- Initial release
+- Basic chat functionality with OpenRouter API
+- Simple UI with message history
+
+---
 
 ## License
 

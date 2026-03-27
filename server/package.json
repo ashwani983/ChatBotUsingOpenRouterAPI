@@ -1,6 +1,6 @@
 {
   "name": "chat-server",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "AI Chat Server with OpenAI",
   "main": "dist/server.js",
   "scripts": {

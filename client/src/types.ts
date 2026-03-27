@@ -25,4 +25,9 @@ export interface Settings {
   temperature: string;
   max_tokens: string;
   system_prompt: string;
+  voice_enabled?: string;
+  tts_enabled?: string;
+  language?: string;
+  font_size?: string;
+  code_auto_run?: string;
 }
