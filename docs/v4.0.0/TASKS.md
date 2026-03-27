@@ -1,74 +1,118 @@
 # Version 4.0.0 - Tasks
 
-## Phase 1: Authentication
+## Phase 1: Image Generation (DALL-E)
 
 ### Backend
-- [ ] Add user table and model
-- [ ] Implement password hashing
-- [ ] Create auth endpoints (register, login, logout)
-- [ ] Implement JWT tokens
-- [ ] Add password reset flow
-- [ ] Session management
+- [ ] Add DALL-E integration to OpenRouter
+- [ ] Create `/api/images/generate` endpoint
+- [ ] Store generated images metadata
+- [ ] Add image model to settings
 
 ### Frontend
-- [ ] Create login page
-- [ ] Create registration page
-- [ ] Add auth state management
-- [ ] Protected routes
-- [ ] Login/logout UI
+- [ ] Create image generator panel/modal
+- [ ] Add style and size selectors
+- [ ] Display generated images in chat
+- [ ] Add regenerate/edit options
+- [ ] Image gallery in conversation
 
-## Phase 2: Cloud Sync
+## Phase 2: Vision (Image Analysis)
 
 ### Backend
-- [ ] Design sync protocol
-- [ ] Implement push/pull endpoints
-- [ ] Conflict detection
-- [ ] Version control
+- [ ] Create `/api/images/upload` endpoint
+- [ ] Support image formats (jpg, png, webp, gif)
+- [ ] Image compression for large files
+- [ ] Vision analysis integration
 
 ### Frontend
-- [ ] Sync status indicator
-- [ ] Manual sync button
-- [ ] Conflict resolution UI
-- [ ] Offline indicator
+- [ ] Drag & drop upload zone
+- [ ] Clipboard paste support
+- [ ] Image preview thumbnails
+- [ ] Multi-image upload UI
+- [ ] Analysis result display
 
-## Phase 3: Plugin System
+## Phase 3: Canvas Editor
 
 ### Backend
-- [ ] Create plugin API
-- [ ] Plugin registration
-- [ ] Plugin execution sandbox
-- [ ] Built-in plugins
+- [ ] Add code execution sandbox
+- [ ] Support JavaScript execution
+- [ ] Console output capture
+- [ ] Timeout handling
 
 ### Frontend
-- [ ] Plugin marketplace UI
-- [ ] Plugin settings
-- [ ] Plugin enable/disable
-- [ ] Plugin output display
+- [ ] Integrate Monaco editor
+- [ ] Split pane layout
+- [ ] Language selector
+- [ ] Live preview iframe
+- [ ] Run/Stop controls
+- [ ] Console output panel
+- [ ] Collapsible panel
 
-## Phase 4: Admin Dashboard
+## Phase 4: File Handling
 
 ### Backend
-- [ ] Admin middleware
-- [ ] User management endpoints
-- [ ] Usage statistics aggregation
-- [ ] Health check endpoints
+- [ ] Create `/api/files/upload` endpoint
+- [ ] Support PDF, images, code files
+- [ ] File storage management
+- [ ] Download endpoint
 
 ### Frontend
-- [ ] Admin dashboard layout
-- [ ] User list view
-- [ ] Usage charts
-- [ ] System status
+- [ ] File attachment UI
+- [ ] Progress indicator
+- [ ] File preview
+- [ ] Download buttons
 
-## Phase 5: Security & Polish
+## Phase 5: Web Search
 
-### Security
-- [ ] Rate limiting
-- [ ] Input sanitization
-- [ ] Security headers
-- [ ] Audit logging
+### Backend
+- [ ] Integrate search API
+- [ ] Create `/api/search` endpoint
+- [ ] Result caching
+- [ ] Citation formatting
+
+### Frontend
+- [ ] Search toggle switch
+- [ ] Results display with citations
+- [ ] Source links
+- [ ] Loading state
+
+## Phase 6: Sharing
+
+### Backend
+- [ ] Create `/api/share` endpoint
+- [ ] Generate unique share IDs
+- [ ] Public view endpoint
+- [ ] View count tracking
+
+### Frontend
+- [ ] Share button in header
+- [ ] Copy link functionality
+- [ ] QR code generation
+- [ ] Shared conversation view
+
+## Phase 7: UI Enhancements
+
+### Frontend
+- [ ] Message grouping by date
+- [ ] Branch conversations UI
+- [ ] Toast notifications
+- [ ] Loading skeletons
+- [ ] Better mobile layout
+- [ ] Panel drag resize
+- [ ] Smooth animations
+- [ ] Empty states
+
+## Phase 8: Polish
 
 ### Testing
-- [ ] Auth flow testing
-- [ ] Sync testing
-- [ ] Plugin testing
-- [ ] Security testing
+- [ ] Image generation flow
+- [ ] Vision upload/analysis
+- [ ] Canvas code execution
+- [ ] File upload/download
+- [ ] Search integration
+- [ ] Share functionality
+
+### Performance
+- [ ] Lazy load images
+- [ ] Virtual scrolling
+- [ ] Image compression
+- [ ] Debounced inputs

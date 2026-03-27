@@ -1,122 +1,159 @@
 # Version 4.0.0 - Design
 
 ## Overview
-Enterprise-ready chatbot with authentication, cloud sync, and plugin system.
+Enhanced chatbot with image generation, vision analysis, canvas editor, and web search integration.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Cloud Services                        │
+│                      OpenRouter API                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │
-│  │  Auth API   │  │  Sync API   │  │  Plugin Registry │   │
+│  │  Chat Models │  │  DALL-E   │  │  Vision Models   │   │
 │  └─────────────┘  └─────────────┘  └─────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   React UI      │────▶│  Express API    │────▶│  OpenRouter     │
-│  (Multi-user)   │     │  + Auth + Sync  │     │  (AI Models)    │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+                               │
+                               ▼
+┌─────────────────┐     ┌─────────────────┐
+│   React UI      │────▶│  Express API    │
+│  + Canvas       │     │  + File Upload  │
+└─────────────────┘     └─────────────────┘
 ```
 
 ## New Components
 
-### Authentication
-- **User Login/Register**: Email + password
-- **Session Management**: JWT tokens
-- **Password Reset**: Email-based recovery
+### Image Generation Panel
+- Expandable image generation interface
+- Prompt input with style options
+- Size selector dropdown
+- Generated image gallery
+- Regenerate/Edit buttons
 
-### Cloud Sync
-- **Data Sync**: Sync conversations across devices
-- **Conflict Resolution**: Handle sync conflicts
-- **Offline Mode**: Work without internet
+### Vision Upload
+- Drag & drop zone
+- Clipboard paste support
+- Image preview thumbnails
+- Analysis result display
 
-### Plugin System
-- **Plugin API**: Create custom plugins
-- **Plugin Marketplace**: Browse/install plugins
-- **Built-in Plugins**:
-  - Web search
-  - Image generation
-  - Calculator
-  - Calendar
+### Canvas Editor
+- Monaco-based code editor
+- Language selector
+- Split pane layout
+- Live preview iframe
+- Run/Stop buttons
+- Console output panel
 
-### Admin Dashboard
-- **User Management**: View/manage users
-- **Usage Analytics**: API usage stats
-- **System Health**: Server status
+### Search Integration
+- Bing/SerpAPI integration
+- Toggle switch in UI
+- Citation formatting
+- Source link display
 
 ## API Extensions
 
-### Auth Endpoints
+### Image Endpoints
 ```
-POST   /api/auth/register     - Create account
-POST   /api/auth/login        - Login
-POST   /api/auth/logout       - Logout
-POST   /api/auth/refresh     - Refresh token
-POST   /api/auth/forgot      - Request password reset
-POST   /api/auth/reset       - Reset password
+POST   /api/images/generate    - Generate image with DALL-E
+GET    /api/images/:id        - Get generated image
+POST   /api/images/upload     - Upload image for analysis
 ```
 
-### Sync Endpoints
+### File Endpoints
 ```
-POST   /api/sync/push        - Upload local changes
-GET    /api/sync/pull        - Download remote changes
-POST   /api/sync/resolve     - Resolve conflicts
-```
-
-### Plugin Endpoints
-```
-GET    /api/plugins           - List available plugins
-POST   /api/plugins/:id      - Install plugin
-DELETE /api/plugins/:id       - Uninstall plugin
-POST   /api/plugins/:id/exec - Execute plugin
+POST   /api/files/upload       - Upload file
+GET    /api/files/:id         - Download file
+DELETE /api/files/:id          - Delete file
 ```
 
-### Admin Endpoints
+### Search Endpoints
 ```
-GET    /api/admin/users      - List users
-GET    /api/admin/usage      - Usage statistics
-GET    /api/admin/health     - System health
+POST   /api/search            - Web search
+GET    /api/search/results    - Get search results
+```
+
+### Share Endpoints
+```
+POST   /api/share             - Create shareable link
+GET    /api/share/:id        - Get shared conversation
 ```
 
 ## Database Schema
 
 ### New Tables
 ```sql
--- Users
-CREATE TABLE users (
+-- Generated Images
+CREATE TABLE images (
   id INTEGER PRIMARY KEY,
-  email TEXT UNIQUE,
-  password_hash TEXT,
+  conversation_id INTEGER,
+  prompt TEXT,
+  url TEXT,
   created_at DATETIME
 );
 
--- Sessions
-CREATE TABLE sessions (
+-- Shared Conversations
+CREATE TABLE shared_conversations (
   id TEXT PRIMARY KEY,
-  user_id INTEGER,
-  expires_at DATETIME
+  conversation_id INTEGER,
+  created_at DATETIME,
+  view_count INTEGER
 );
 
--- Sync metadata
-CREATE TABLE sync_meta (
-  user_id INTEGER,
-  last_sync DATETIME,
-  version INTEGER
+-- Uploaded Files
+CREATE TABLE files (
+  id TEXT PRIMARY KEY,
+  conversation_id INTEGER,
+  filename TEXT,
+  mime_type TEXT,
+  size INTEGER,
+  path TEXT,
+  created_at DATETIME
 );
 ```
 
-## Security
+## UI Layout
 
-### Authentication
-- Bcrypt password hashing
-- JWT access tokens
-- Refresh token rotation
+### New UI Elements
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Header: Title + Model + Search Toggle + Share + Settings    │
+├─────────────┬───────────────────────────────────────────────┤
+│             │                                               │
+│  Sidebar    │           Main Chat Area                     │
+│  - Chats    │           - Messages                         │
+│  - Search   │           - Canvas (collapsible)             │
+│             │                                               │
+├─────────────┴───────────────────────────────────────────────┤
+│ Input: Message + Attach + Image Gen + Voice + Send          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Canvas Panel (Collapsible)
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [Code] [Preview]              [Run ▶] [Stop ■] [Expand ⬆] │
+├─────────────────────────┬───────────────────────────────────┤
+│                         │                                   │
+│   Code Editor           │     Live Preview                  │
+│   (Monaco)             │     (iframe)                     │
+│                         │                                   │
+├─────────────────────────┴───────────────────────────────────┤
+│ Console Output                                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## External APIs
+
+### DALL-E Integration
+- Use OpenRouter's image generation endpoint
+- Support for multiple styles
+- Store generated images
+
+### Vision API
+- Analyze uploaded images
+- Multi-image support
+- Clipboard image reading
+
+### Web Search
+- SerpAPI or DuckDuckGo API
 - Rate limiting
-
-### Data Protection
-- Encryption at rest
-- HTTPS only
-- CORS configuration
-- Input sanitization
+- Result caching

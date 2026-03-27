@@ -2,52 +2,64 @@
 
 ## Functional Requirements
 
-### Authentication
-- [ ] User registration (email/password)
-- [ ] User login/logout
-- [ ] Password reset flow
-- [ ] Session management
-- [ ] JWT token authentication
+### Image Generation (DALL-E Integration)
+- [ ] Generate images from text prompts
+- [ ] Image style selection (realistic, artistic, cartoon, etc.)
+- [ ] Image size options (256x256, 512x512, 1024x1024)
+- [ ] Save generated images to conversation
+- [ ] Regenerate/edit existing images
 
-### Cloud Sync
-- [ ] Real-time sync across devices
-- [ ] Offline support
-- [ ] Conflict resolution
-- [ ] Sync status indicator
+### Vision (Image Analysis)
+- [ ] Upload images for analysis
+- [ ] Drag & drop image support
+- [ ] Paste image from clipboard
+- [ ] Multi-image analysis
+- [ ] Describe/explain uploaded images
 
-### Plugin System
-- [ ] Plugin API for developers
-- [ ] Plugin installation/uninstallation
-- [ ] Built-in plugins (search, calculator)
-- [ ] Plugin settings
+### Canvas Editor
+- [ ] Interactive code editor panel
+- [ ] Syntax highlighting for multiple languages
+- [ ] Live preview for HTML/CSS/JS
+- [ ] Split view (code + preview)
+- [ ] Code execution (JavaScript sandbox)
 
-### Admin Dashboard
-- [ ] User management
-- [ ] Usage statistics
-- [ ] System health monitoring
-- [ ] API key management
+### File Handling
+- [ ] PDF upload and analysis
+- [ ] Document summarization
+- [ ] File download from AI responses
+- [ ] Support for code files (.py, .js, .ts, etc.)
 
-### Sharing
-- [ ] Share conversation via link
-- [ ] Public conversation pages
-- [ ] Export to public URL
+### Web Search Integration
+- [ ] Real-time web search capability
+- [ ] Search results as citations
+- [ ] Browse web pages for up-to-date info
+- [ ] Toggle search on/off
+
+### Sharing & Collaboration
+- [ ] Share conversation via public link
+- [ ] Read-only shared conversations
+- [ ] Copy shareable link
+- [ ] QR code for shared links
+
+### Enhanced UI/UX
+- [ ] Improved message grouping
+- [ ] Branch conversations (tree view)
+- [ ] Better mobile responsiveness
+- [ ] Smooth animations
+- [ ] Toast notifications
+- [ ] Drag to resize panels
 
 ## Non-Functional Requirements
 
-### Security
-- [ ] Password encryption (bcrypt)
-- [ ] JWT token validation
-- [ ] Rate limiting
-- [ ] Input validation
-- [ ] XSS protection
-- [ ] CSRF protection
-
 ### Performance
-- [ ] Efficient sync protocol
-- [ ] Caching strategy
-- [ ] Pagination for large data
+- [ ] Lazy loading for large conversations
+- [ ] Image compression before upload
+- [ ] Debounced search
+- [ ] Virtual scrolling for long chats
 
-### Scalability
-- [ ] Multi-user support
-- [ ] Database optimization
-- [ ] API rate limiting per user
+### User Experience
+- [ ] Onboarding tips for new features
+- [ ] Feature tooltips
+- [ ] Keyboard shortcut hints
+- [ ] Loading skeletons
+- [ ] Empty states with suggestions
