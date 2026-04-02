@@ -1,31 +1,8 @@
 {
   "name": "occhat",
   "version": "4.2.0",
-  "description": "OpenControlChat - AI Chat using OpenRouter API - A ChatGPT-like interface",
-  "bin": {
-    "occhat": "./cli.js"
-  },
-  "main": "cli.js",
-  "files": [
-    "cli.js",
-    "server/dist/",
-    "server/package.json",
-    "server/.env.example",
-    "client/dist/"
-  ],
-  "scripts": {
-    "build": "cd client && npm run build && cd ../server && npx tsc",
-    "dev:server": "cd server && npx tsx watch src/server.ts",
-    "dev:client": "cd client && npx vite",
-    "postinstall": "cd server && npm install"
-  },
-  "keywords": [
-    "opencontrolchat",
-    "ai",
-    "openrouter",
-    "cli",
-    "chatgpt"
-  ],
-  "author": "",
-  "license": "MIT"
+  "private": true,
+  "dependencies": {
+    "openai": "^4.28.0"
+  }
 }
