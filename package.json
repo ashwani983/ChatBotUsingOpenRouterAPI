@@ -1,9 +1,9 @@
 {
-  "name": "opencontrolchat",
-  "version": "5.0.0",
+  "name": "occhat",
+  "version": "4.2.0",
   "description": "OpenControlChat - AI Chat using OpenRouter API - A ChatGPT-like interface",
   "bin": {
-    "opencontrolchat": "./cli.js"
+    "occhat": "./cli.js"
   },
   "main": "cli.js",
   "files": [
