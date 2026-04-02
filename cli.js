@@ -7,11 +7,20 @@ const readline = require('readline');
 const http = require('http');
 
 const CLI_DIR = __dirname;
-const PID_FILE = path.join(CLI_DIR, '.chatbot.pid');
-const PORT_FILE = path.join(CLI_DIR, '.chatbot.port');
-const LOG_FILE = path.join(CLI_DIR, 'chatbot.log');
+const HOME = process.env.HOME || process.env.USERPROFILE || process.env.APPDATA || '/tmp';
+const DATA_DIR = path.join(HOME, '.chatbot');
+const PID_FILE = path.join(DATA_DIR, '.chatbot.pid');
+const PORT_FILE = path.join(DATA_DIR, '.chatbot.port');
+const LOG_FILE = path.join(DATA_DIR, 'chatbot.log');
+
+function ensureDataDir() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+}
 
 function log(message) {
+  ensureDataDir();
   const timestamp = new Date().toISOString();
   const logMessage = `[${timestamp}] ${message}\n`;
   fs.appendFileSync(LOG_FILE, logMessage);
@@ -52,6 +61,7 @@ function checkApiKey() {
 }
 
 function getPort() {
+  ensureDataDir();
   if (fs.existsSync(PORT_FILE)) {
     return fs.readFileSync(PORT_FILE, 'utf-8').trim();
   }
@@ -59,10 +69,12 @@ function getPort() {
 }
 
 function setPort(port) {
+  ensureDataDir();
   fs.writeFileSync(PORT_FILE, port.toString());
 }
 
 function getPid() {
+  ensureDataDir();
   if (fs.existsSync(PID_FILE)) {
     return parseInt(fs.readFileSync(PID_FILE, 'utf-8').trim());
   }
@@ -70,6 +82,7 @@ function getPid() {
 }
 
 function setPid(pid) {
+  ensureDataDir();
   fs.writeFileSync(PID_FILE, pid.toString());
 }
 
@@ -106,7 +119,29 @@ function checkServerHealth(port) {
 }
 
 function checkDependencies() {
-  return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const serverPath = path.join(CLI_DIR, 'server');
+    const nodeModulesPath = path.join(serverPath, 'node_modules');
+    
+    if (!fs.existsSync(nodeModulesPath)) {
+      console.log('Installing server dependencies...');
+      const install = spawn('npm', ['install'], {
+        cwd: serverPath,
+        stdio: 'inherit',
+        shell: true
+      });
+      install.on('close', (code) => {
+        if (code === 0) {
+          resolve(true);
+        } else {
+          console.error('Failed to install dependencies.');
+          process.exit(1);
+        }
+      });
+    } else {
+      resolve(true);
+    }
+  });
 }
 
 async function showStatus() {
@@ -127,7 +162,7 @@ async function showStatus() {
   console.log(`PID:       ${pid}`);
   console.log(`Port:      ${port}`);
   console.log(`URL:       http://localhost:${port}`);
-  console.log(`Log file:  ${LOG_FILE}`);
+  console.log(`Log file: ${LOG_FILE}`);
   console.log('');
 }
 

@@ -1,10 +1,32 @@
-# AI Chat Application
+# AI Chat CLI
 
 A responsive, full-stack AI chat interface similar to ChatGPT, built with React, Node.js, Express, and OpenRouter API.
 
-![Chat Application Screenshot](screenshot/chatbot-using-the-operoute.png)
+[![npm version](https://img.shields.io/npm/v/ai-chatbot-cli.svg)](https://www.npmjs.com/package/ai-chatbot-cli)
+[![npm downloads](https://img.shields.io/npm/dm/ai-chatbot-cli.svg)](https://www.npmjs.com/package/ai-chatbot-cli)
+[![license](https://img.shields.io/npm/l/ai-chatbot-cli.svg)](https://opensource.org/licenses/MIT)
 
-## v4.0.0 Features
+## Install
+
+```bash
+npm install -g ai-chatbot-cli
+```
+
+## Quick Start
+
+1. Configure your API key:
+```bash
+chatbot config
+```
+
+2. Start the ChatBot:
+```bash
+chatbot
+```
+
+3. Open http://localhost:3001 in your browser.
+
+## v4.1.0 Features
 
 ### Canvas Editor
 - **Monaco Editor** - Full-featured code editor with syntax highlighting
@@ -58,24 +80,8 @@ A responsive, full-stack AI chat interface similar to ChatGPT, built with React,
 
 Install the ChatBot CLI and start chatting in minutes:
 
-### Option 1: Install from GitHub Release (Recommended)
-
-**Linux/macOS:**
 ```bash
-# Download and install the latest release
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
-
-# Configure your API key
-chatbot config
-
-# Start the ChatBot
-chatbot
-```
-
-**Windows (PowerShell or Command Prompt):**
-```powershell
-# Download and install the latest release
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
+npm install -g ai-chatbot-cli
 
 # Configure your API key
 chatbot config
@@ -88,73 +94,23 @@ Then open http://localhost:3001 in your browser.
 
 ---
 
-## Installation Steps by Platform
-
-### Prerequisites
-- Node.js 18 or higher
-- npm (comes with Node.js)
-
-### Step 1: Install the CLI
-
-**Linux:**
-```bash
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
-```
-
-**macOS:**
-```bash
-sudo npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
-```
-
-**Windows:**
-```cmd
-npm install -g https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/releases/download/v4.0.0/ai-chatbot-cli-4.0.0.tgz
-```
-
-### Step 2: Configure Your API Key
+## Configuration
 
 Get a free API key from: https://openrouter.ai/settings
 
-**Option A - Interactive (Recommended):**
+**Interactive (Recommended):**
 ```bash
 chatbot config
 ```
 
-**Option B - Environment Variable:**
+**Environment Variable:**
 ```bash
 # Linux/macOS
 export OPENROUTER_API_KEY=your_api_key_here
 
-# Windows (Command Prompt)
-set OPENROUTER_API_KEY=your_api_key_here
-
 # Windows (PowerShell)
 $env:OPENROUTER_API_KEY="your_api_key_here"
 ```
-
-**Option C - Config File:**
-```bash
-# Linux/macOS
-echo '{"apiKey": "your_api_key_here"}' > ~/.chatbotrc
-
-# Windows (Command Prompt)
-echo {"apiKey": "your_api_key_here"} > %USERPROFILE%\.chatbotrc
-
-# Windows (PowerShell)
-echo '{"apiKey": "your_api_key_here"}' | Out-File -FilePath "$env:USERPROFILE\.chatbotrc"
-```
-
-### Step 3: Start the ChatBot
-
-```bash
-chatbot
-```
-
-The server will start in the background. Open **http://localhost:3001** in your browser.
-
-### Step 4: Stop the Server
-
-Press `Ctrl+C` in the terminal to stop the server.
 
 ---
 

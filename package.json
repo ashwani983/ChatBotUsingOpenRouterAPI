@@ -1,6 +1,6 @@
 {
   "name": "ai-chatbot-cli",
-  "version": "4.0.0",
+  "version": "4.2.0",
   "description": "AI Chat CLI using OpenRouter API - A ChatGPT-like interface",
   "bin": {
     "chatbot": "./cli.js"
@@ -8,15 +8,24 @@
   "main": "cli.js",
   "files": [
     "cli.js",
-    "server/",
+    "server/dist/",
+    "server/package.json",
+    "server/.env.example",
     "client/dist/"
   ],
   "scripts": {
     "build": "cd client && npm run build && cd ../server && npx tsc",
     "dev:server": "cd server && npx tsx watch src/server.ts",
-    "dev:client": "cd client && npx vite"
+    "dev:client": "cd client && npx vite",
+    "postinstall": "cd server && npm install"
   },
-  "keywords": ["chatbot", "ai", "openrouter", "cli", "chatgpt"],
+  "keywords": [
+    "chatbot",
+    "ai",
+    "openrouter",
+    "cli",
+    "chatgpt"
+  ],
   "author": "",
   "license": "MIT"
 }
