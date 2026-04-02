@@ -94,10 +94,16 @@ function ChatApp() {
   }, [searchQuery, conversations]);
 
   const fetchConversations = async () => {
+    if (!apiKey) return;
     try {
       const res = await fetch('/api/conversations', {
         headers: { 'X-API-Key': apiKey }
       });
+      if (res.status === 401) {
+        localStorage.removeItem('apiKey');
+        setApiKey('');
+        return;
+      }
       const data = await res.json();
       setConversations(data);
       setFilteredConversations(data);
@@ -107,6 +113,7 @@ function ChatApp() {
   };
 
   const searchConversations = async (query: string) => {
+    if (!apiKey) return;
     try {
       const res = await fetch(`/api/conversations/search?q=${encodeURIComponent(query)}`, {
         headers: { 'X-API-Key': apiKey }
@@ -120,6 +127,7 @@ function ChatApp() {
   };
 
   const fetchModels = async () => {
+    if (!apiKey) return;
     try {
       const res = await fetch('/api/models', {
         headers: { 'X-API-Key': apiKey }
@@ -132,6 +140,7 @@ function ChatApp() {
   };
 
   const fetchSettings = async () => {
+    if (!apiKey) return;
     try {
       const res = await fetch('/api/settings', {
         headers: { 'X-API-Key': apiKey }
