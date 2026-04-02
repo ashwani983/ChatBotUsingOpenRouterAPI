@@ -508,7 +508,7 @@ function ChatApp() {
   const displayConversations = searchQuery.trim() ? filteredConversations : conversations;
 
   return (
-    <div className={`flex h-screen ${bgColor} ${textColor}`} role="application" aria-label="OCCChat Application">
+    <div className={`flex h-screen ${bgColor} ${textColor}`} role="application" aria-label="OpenControlChat Application">
       <aside
         className={`${
           sidebarOpen ? 'w-72' : 'w-0'
@@ -609,7 +609,7 @@ function ChatApp() {
               </svg>
             </button>
             <h1 className="text-lg font-semibold">
-              {currentConversation?.title || 'OCCChat'}
+              {currentConversation?.title || 'OpenControlChat'}
             </h1>
           </div>
           <div className="flex items-center gap-2">

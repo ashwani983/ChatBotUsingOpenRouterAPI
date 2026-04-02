@@ -134,7 +134,7 @@ function createOpenAIClient(key: string) {
     baseURL: 'https://openrouter.ai/api/v1',
     defaultHeaders: {
       'HTTP-Referer': 'http://localhost:3001',
-      'X-Title': 'OCCChat',
+      'X-Title': 'OpenControlChat',
     },
   });
 }

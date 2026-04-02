@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     baseURL: 'https://openrouter.ai/api/v1',
     defaultHeaders: {
       'HTTP-Referer': req.headers.referer || 'https://vercel.app',
-      'X-Title': 'OCCChat',
+      'X-Title': 'OpenControlChat',
     },
   });
 
