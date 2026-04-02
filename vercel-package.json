@@ -1,0 +1,14 @@
+{
+  "name": "ai-chatbot-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "cd client && npm run build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/node": "^3.0.0",
+    "openai": "^4.28.0"
+  }
+}

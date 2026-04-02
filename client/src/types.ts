@@ -30,4 +30,5 @@ export interface Settings {
   language?: string;
   font_size?: string;
   code_auto_run?: string;
+  backend_url?: string;
 }

@@ -89,6 +89,7 @@ function saveDatabase() {
 }
 
 let apiKey = process.env.OPENROUTER_API_KEY;
+let clientApiKey: string | null = null;
 
 if (!apiKey) {
   const configPath = path.join(home, '.chatbotrc');
@@ -103,15 +104,21 @@ if (!apiKey) {
   }
 }
 
-if (!apiKey) {
-  console.error('ERROR: OpenRouter API key not found. Please set OPENROUTER_API_KEY environment variable or create ~/.chatbotrc config file.');
-  console.error('Example config file: echo \'{"apiKey": "your_api_key"}\' > ~/.chatbotrc');
-  process.exit(1);
-}
-
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+app.use((req, res, next) => {
+  const apiKeyHeader = req.headers['x-api-key'] as string;
+  if (apiKeyHeader) {
+    clientApiKey = apiKeyHeader;
+  }
+  next();
+});
+
+function getApiKey(): string {
+  return clientApiKey || apiKey || '';
+}
 
 const AVAILABLE_MODELS = [
   { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', provider: 'Meta' },
@@ -121,14 +128,16 @@ const AVAILABLE_MODELS = [
   { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat', provider: 'DeepSeek' },
 ];
 
-const openai = new OpenAI({
-  apiKey: apiKey,
-  baseURL: 'https://openrouter.ai/api/v1',
-  defaultHeaders: {
-    'HTTP-Referer': 'http://localhost:3001',
-    'X-Title': 'AI Chat',
-  },
-});
+function createOpenAIClient(key: string) {
+  return new OpenAI({
+    apiKey: key,
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: {
+      'HTTP-Referer': 'http://localhost:3001',
+      'X-Title': 'AI Chat',
+    },
+  });
+}
 
 // API Routes
 app.get('/api/models', (req, res) => {
@@ -293,6 +302,13 @@ app.post('/api/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
+  const currentApiKey = getApiKey();
+  if (!currentApiKey) {
+    return res.status(401).json({ error: 'API key is required. Please configure your OpenRouter API key in Settings.' });
+  }
+
+  const openai = createOpenAIClient(currentApiKey);
+
   try {
     const stream = await openai.chat.completions.create({
       model: modelUsed,
@@ -344,6 +360,13 @@ app.post('/api/vision/analyze', async (req, res) => {
   if (!image) {
     return res.status(400).json({ error: 'Image data is required' });
   }
+
+  const currentApiKey = getApiKey();
+  if (!currentApiKey) {
+    return res.status(401).json({ error: 'API key is required. Please configure your OpenRouter API key in Settings.' });
+  }
+
+  const openai = createOpenAIClient(currentApiKey);
 
   try {
     const response = await openai.chat.completions.create({

@@ -37,9 +37,21 @@ function ChatApp() {
   });
   const [announcement, setAnnouncement] = useState<string>('');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [apiKey, setApiKey] = useState<string>('');
   const lastUserMessageRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const storedKey = localStorage.getItem('apiKey');
+    if (storedKey) {
+      setApiKey(storedKey);
+    }
+  }, []);
+
+  const handleSaveApiKey = (key: string) => {
+    setApiKey(key);
+  };
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
@@ -83,7 +95,9 @@ function ChatApp() {
 
   const fetchConversations = async () => {
     try {
-      const res = await fetch('/api/conversations');
+      const res = await fetch('/api/conversations', {
+        headers: { 'X-API-Key': apiKey }
+      });
       const data = await res.json();
       setConversations(data);
       setFilteredConversations(data);
@@ -94,7 +108,9 @@ function ChatApp() {
 
   const searchConversations = async (query: string) => {
     try {
-      const res = await fetch(`/api/conversations/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/conversations/search?q=${encodeURIComponent(query)}`, {
+        headers: { 'X-API-Key': apiKey }
+      });
       const data = await res.json();
       setFilteredConversations(data);
     } catch (err) {
@@ -105,7 +121,9 @@ function ChatApp() {
 
   const fetchModels = async () => {
     try {
-      const res = await fetch('/api/models');
+      const res = await fetch('/api/models', {
+        headers: { 'X-API-Key': apiKey }
+      });
       const data = await res.json();
       setModels(data);
     } catch (err) {
@@ -115,7 +133,9 @@ function ChatApp() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch('/api/settings', {
+        headers: { 'X-API-Key': apiKey }
+      });
       const data = await res.json();
       setSettings(prev => ({ ...prev, ...data }));
       if (data.theme === 'light') {
@@ -129,7 +149,9 @@ function ChatApp() {
 
   const fetchMessages = async (conversationId: number) => {
     try {
-      const res = await fetch(`/api/conversations/${conversationId}/messages`);
+      const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+        headers: { 'X-API-Key': apiKey }
+      });
       const data = await res.json();
       setMessages(data);
     } catch (err) {
@@ -174,7 +196,10 @@ function ChatApp() {
 
   const createNewConversation = async () => {
     try {
-      const res = await fetch('/api/conversations', { method: 'POST' });
+      const res = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'X-API-Key': apiKey }
+      });
       const newConv = await res.json();
       setConversations(prev => [newConv, ...prev]);
       setFilteredConversations(prev => [newConv, ...prev]);
@@ -191,7 +216,10 @@ function ChatApp() {
   const deleteConversation = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     try {
-      await fetch(`/api/conversations/${id}`, { method: 'DELETE' });
+      await fetch(`/api/conversations/${id}`, { 
+        method: 'DELETE',
+        headers: { 'X-API-Key': apiKey }
+      });
       setConversations(prev => prev.filter(c => c.id !== id));
       setFilteredConversations(prev => prev.filter(c => c.id !== id));
       if (currentConversationId === id) {
@@ -206,7 +234,10 @@ function ChatApp() {
   const clearAllHistory = async () => {
     if (!confirm('Are you sure you want to clear all chat history?')) return;
     try {
-      await fetch('/api/conversations', { method: 'DELETE' });
+      await fetch('/api/conversations', { 
+        method: 'DELETE',
+        headers: { 'X-API-Key': apiKey }
+      });
       setConversations([]);
       setFilteredConversations([]);
       setCurrentConversationId(null);
@@ -226,7 +257,10 @@ function ChatApp() {
     try {
       await fetch('/api/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
         body: JSON.stringify(newSettings)
       });
       setSettings(prev => ({ ...prev, ...newSettings }));
@@ -327,6 +361,11 @@ function ChatApp() {
   };
 
   const handleSendMessage = async (content: string) => {
+    if (!apiKey) {
+      setSettingsOpen(true);
+      return;
+    }
+
     stopSpeaking();
     lastUserMessageRef.current = content;
     
@@ -334,7 +373,10 @@ function ChatApp() {
 
     if (!convId) {
       try {
-        const res = await fetch('/api/conversations', { method: 'POST' });
+      const res = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: { 'X-API-Key': apiKey }
+        });
         const newConv = await res.json();
         setConversations(prev => [newConv, ...prev]);
         setFilteredConversations(prev => [newConv, ...prev]);
@@ -366,7 +408,10 @@ function ChatApp() {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey
+        },
         body: JSON.stringify({
           message: content,
           conversationId: convId,
@@ -693,6 +738,8 @@ function ChatApp() {
         settings={settings}
         onSave={handleSaveSettings}
         models={models}
+        apiKey={apiKey}
+        onSaveApiKey={handleSaveApiKey}
       />
       
       <ShortcutsModal
