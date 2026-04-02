@@ -55,7 +55,12 @@ function ChatApp() {
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
+  const [hasInitialized, setHasInitialized] = useState(false);
+
   useEffect(() => {
+    if (!apiKey) return;
+    if (hasInitialized) return;
+    setHasInitialized(true);
     fetchConversations();
     fetchModels();
     fetchSettings();
