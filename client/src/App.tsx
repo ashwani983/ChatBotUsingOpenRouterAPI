@@ -609,7 +609,7 @@ function ChatApp() {
               </svg>
             </button>
             <h1 className="text-lg font-semibold">
-              {currentConversation?.title || 'AI Assistant'}
+              {currentConversation?.title || 'OCCChat'}
             </h1>
           </div>
           <div className="flex items-center gap-2">
