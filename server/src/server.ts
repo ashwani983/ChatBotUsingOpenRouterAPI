@@ -12,11 +12,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const home = process.env.HOME || process.env.USERPROFILE || '';
-const dataDir = path.join(home, '.chatbot');
+const dataDir = path.join(home, '.occhat');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
-const dbPath = path.join(dataDir, 'chatbot.db');
+const dbPath = path.join(dataDir, 'occhat.db');
 
 let db: any;
 
@@ -92,7 +92,7 @@ let apiKey = process.env.OPENROUTER_API_KEY;
 let clientApiKey: string | null = null;
 
 if (!apiKey) {
-  const configPath = path.join(home, '.chatbotrc');
+  const configPath = path.join(home, '.occhatrc');
   try {
     if (fs.existsSync(configPath)) {
       const configContent = fs.readFileSync(configPath, 'utf-8');
@@ -134,7 +134,7 @@ function createOpenAIClient(key: string) {
     baseURL: 'https://openrouter.ai/api/v1',
     defaultHeaders: {
       'HTTP-Referer': 'http://localhost:3001',
-      'X-Title': 'AI Chat',
+      'X-Title': 'OCCChat',
     },
   });
 }

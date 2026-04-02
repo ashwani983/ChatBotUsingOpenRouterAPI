@@ -8,10 +8,10 @@ const http = require('http');
 
 const CLI_DIR = __dirname;
 const HOME = process.env.HOME || process.env.USERPROFILE || process.env.APPDATA || '/tmp';
-const DATA_DIR = path.join(HOME, '.chatbot');
-const PID_FILE = path.join(DATA_DIR, '.chatbot.pid');
-const PORT_FILE = path.join(DATA_DIR, '.chatbot.port');
-const LOG_FILE = path.join(DATA_DIR, 'chatbot.log');
+const DATA_DIR = path.join(HOME, '.occhat');
+const PID_FILE = path.join(DATA_DIR, '.occhat.pid');
+const PORT_FILE = path.join(DATA_DIR, '.occhat.port');
+const LOG_FILE = path.join(DATA_DIR, 'occhat.log');
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -32,7 +32,7 @@ function getApiKey() {
   
   if (!apiKey) {
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    const configPath = path.join(home, '.chatbotrc');
+    const configPath = path.join(home, '.occhatrc');
     try {
       if (fs.existsSync(configPath)) {
         const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -53,7 +53,7 @@ function checkApiKey() {
     console.error('     set OPENROUTER_API_KEY=your_api_key_here');
     console.error('\n  2. Config file:');
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    console.error(`     echo {"apiKey": "your_api_key_here"} > ${path.join(home, '.chatbotrc')}`);
+    console.error(`     echo {"apiKey": "your_api_key_here"} > ${path.join(home, '.occhatrc')}`);
     console.error('\n  3. Run: chatbot config');
     console.error('\n  Get a free API key from: https://openrouter.ai/settings\n');
     process.exit(1);
@@ -279,7 +279,7 @@ function configureApiKey() {
     }
     
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    const configPath = path.join(home, '.chatbotrc');
+    const configPath = path.join(home, '.occhatrc');
     fs.writeFileSync(configPath, JSON.stringify({ apiKey: apiKey.trim() }, null, 2));
     console.log(`\nAPI key saved to ${configPath}`);
     console.log('You can now run: chatbot\n');
@@ -343,7 +343,7 @@ Environment Variables:
   OPENROUTER_API_KEY  Your OpenRouter API key
 
 Config File:
-  ~/.chatbotrc        JSON file with {"apiKey": "your_key"}
+  ~/.occhatrc        JSON file with {"apiKey": "your_key"}
 
 Get a free API key from: https://openrouter.ai/settings
 `);

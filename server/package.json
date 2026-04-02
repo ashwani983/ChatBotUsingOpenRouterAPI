@@ -1,7 +1,7 @@
 {
-  "name": "chat-server",
-  "version": "4.0.0",
-  "description": "AI Chat Server with OpenAI",
+  "name": "occhat-server",
+  "version": "5.0.0",
+  "description": "OpenControlChat Server with OpenRouter",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

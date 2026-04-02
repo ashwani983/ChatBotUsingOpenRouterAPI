@@ -1,9 +1,9 @@
 {
-  "name": "ai-chatbot-cli",
-  "version": "4.2.0",
-  "description": "AI Chat CLI using OpenRouter API - A ChatGPT-like interface",
+  "name": "occhat",
+  "version": "5.0.0",
+  "description": "OpenControlChat - AI Chat using OpenRouter API - A ChatGPT-like interface",
   "bin": {
-    "chatbot": "./cli.js"
+    "occhat": "./cli.js"
   },
   "main": "cli.js",
   "files": [
@@ -20,7 +20,8 @@
     "postinstall": "cd server && npm install"
   },
   "keywords": [
-    "chatbot",
+    "occhat",
+    "opencontrolchat",
     "ai",
     "openrouter",
     "cli",

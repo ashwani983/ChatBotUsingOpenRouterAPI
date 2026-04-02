@@ -508,7 +508,7 @@ function ChatApp() {
   const displayConversations = searchQuery.trim() ? filteredConversations : conversations;
 
   return (
-    <div className={`flex h-screen ${bgColor} ${textColor}`} role="application" aria-label="AI ChatBot Application">
+    <div className={`flex h-screen ${bgColor} ${textColor}`} role="application" aria-label="OCCChat Application">
       <aside
         className={`${
           sidebarOpen ? 'w-72' : 'w-0'
