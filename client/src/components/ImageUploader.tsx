@@ -151,6 +151,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey = '', onIma
 
         const uploadData = await uploadRes.json();
         const imageId = uploadData.id;
+        
+        console.log('Image uploaded, analyzing:', imageId);
 
         const response = await fetch('/api/vision/analyze', {
           method: 'POST',
@@ -163,11 +165,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey = '', onIma
           })
         });
 
+        console.log('Vision response status:', response.status);
+        
         if (!response.ok) {
+          const errData = await response.json();
+          console.error('Vision error response:', errData);
           throw new Error('Failed to analyze image');
         }
 
         const data = await response.json();
+        console.log('Vision analysis result:', data.analysis);
         analyses.push(data.analysis);
       }
 
