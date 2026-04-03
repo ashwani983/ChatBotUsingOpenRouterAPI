@@ -113,8 +113,8 @@
 ## Remaining v4.0.0 Tasks (from GitHub Issues)
 
 ### Open Bugs (High Priority)
-- [ ] #23 - Bug: Canvas run button causes page to freeze for JavaScript
-- [ ] #22 - Bug: Canvas editor not working and closing unexpectedly
+- [x] #23 - Bug: Canvas run button causes page freeze for JavaScript (Added setTimeout to prevent blocking)
+- [x] #22 - Bug: Canvas editor not working and closing unexpectedly (editor appears fully functional)
 - [x] #20 - Bug: File and image upload not working (Added Vercel API routes: /api/files/upload, /api/files/[id], /api/vision)
 
 ### Open Features

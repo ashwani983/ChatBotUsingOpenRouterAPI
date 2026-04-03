@@ -144,104 +144,106 @@ const Canvas: React.FC<CanvasProps> = ({ theme }) => {
     setIsRunning(true);
     setConsoleOutput([]);
 
-    if (language === 'html') {
-      if (iframeRef.current) {
-        iframeRef.current.srcdoc = code;
-      }
-      setConsoleOutput([{
-        type: 'info',
-        message: 'HTML rendered in preview',
-        timestamp: new Date()
-      }]);
-      setIsRunning(false);
-      return;
-    }
-
-    if (language === 'css') {
-      if (iframeRef.current) {
-        iframeRef.current.srcdoc = `
-          <html>
-          <head>
-            <style>${code}</style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>CSS Preview</h1>
-              <p>Your styles are applied to this content.</p>
-              <button>Button</button>
-              <input type="text" placeholder="Input field">
-            </div>
-          </body>
-          </html>
-        `;
-      }
-      setConsoleOutput([{
-        type: 'info',
-        message: 'CSS preview rendered',
-        timestamp: new Date()
-      }]);
-      setIsRunning(false);
-      return;
-    }
-
-    const logs: ConsoleEntry[] = [];
-    const sandboxConsole = {
-      log: (...args: unknown[]) => {
-        logs.push({
-          type: 'log',
-          message: args.map(arg => formatValue(arg)).join(' '),
+    setTimeout(() => {
+      if (language === 'html') {
+        if (iframeRef.current) {
+          iframeRef.current.srcdoc = code;
+        }
+        setConsoleOutput([{
+          type: 'info',
+          message: 'HTML rendered in preview',
           timestamp: new Date()
-        });
-      },
-      error: (...args: unknown[]) => {
+        }]);
+        setIsRunning(false);
+        return;
+      }
+
+      if (language === 'css') {
+        if (iframeRef.current) {
+          iframeRef.current.srcdoc = `
+            <html>
+            <head>
+              <style>${code}</style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>CSS Preview</h1>
+                <p>Your styles are applied to this content.</p>
+                <button>Button</button>
+                <input type="text" placeholder="Input field">
+              </div>
+            </body>
+            </html>
+          `;
+        }
+        setConsoleOutput([{
+          type: 'info',
+          message: 'CSS preview rendered',
+          timestamp: new Date()
+        }]);
+        setIsRunning(false);
+        return;
+      }
+
+      const logs: ConsoleEntry[] = [];
+      const sandboxConsole = {
+        log: (...args: unknown[]) => {
+          logs.push({
+            type: 'log',
+            message: args.map(arg => formatValue(arg)).join(' '),
+            timestamp: new Date()
+          });
+        },
+        error: (...args: unknown[]) => {
+          logs.push({
+            type: 'error',
+            message: args.map(arg => formatValue(arg)).join(' '),
+            timestamp: new Date()
+          });
+        },
+        warn: (...args: unknown[]) => {
+          logs.push({
+            type: 'warn',
+            message: args.map(arg => formatValue(arg)).join(' '),
+            timestamp: new Date()
+          });
+        },
+        info: (...args: unknown[]) => {
+          logs.push({
+            type: 'info',
+            message: args.map(arg => formatValue(arg)).join(' '),
+            timestamp: new Date()
+          });
+        }
+      };
+
+      try {
+        const sandboxCode = `
+          (function(console) {
+            ${code}
+          })
+        `;
+        const fn = eval(sandboxCode);
+        const result = fn(sandboxConsole);
+
+        if (result !== undefined) {
+          logs.push({
+            type: 'log',
+            message: `→ ${formatValue(result)}`,
+            timestamp: new Date()
+          });
+        }
+      } catch (error: unknown) {
         logs.push({
           type: 'error',
-          message: args.map(arg => formatValue(arg)).join(' '),
-          timestamp: new Date()
-        });
-      },
-      warn: (...args: unknown[]) => {
-        logs.push({
-          type: 'warn',
-          message: args.map(arg => formatValue(arg)).join(' '),
-          timestamp: new Date()
-        });
-      },
-      info: (...args: unknown[]) => {
-        logs.push({
-          type: 'info',
-          message: args.map(arg => formatValue(arg)).join(' '),
+          message: error instanceof Error ? error.message : String(error),
           timestamp: new Date()
         });
       }
-    };
 
-    try {
-      const sandboxCode = `
-        (function(console) {
-          ${code}
-        })
-      `;
-      const fn = eval(sandboxCode);
-      const result = fn(sandboxConsole);
-
-      if (result !== undefined) {
-        logs.push({
-          type: 'log',
-          message: `→ ${formatValue(result)}`,
-          timestamp: new Date()
-        });
-      }
-    } catch (error: unknown) {
-      logs.push({
-        type: 'error',
-        message: error instanceof Error ? error.message : String(error),
-        timestamp: new Date()
-      });
-    }
-
-    setConsoleOutput(logs);
-    setIsRunning(false);
+      setConsoleOutput(logs);
+      setIsRunning(false);
+    }, 100);
   };
 
   const formatValue = (value: unknown): string => {
