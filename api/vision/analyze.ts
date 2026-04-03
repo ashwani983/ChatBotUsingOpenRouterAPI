@@ -55,14 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await initImagesTable();
     
-    console.log('Looking for image:', imageId, 'user:', userId);
-    
     const result = await sql`
       SELECT data, mime_type FROM images WHERE id = ${imageId} AND user_id = ${userId}
     `;
 
     if (result.rows.length === 0) {
-      console.log('Image not found in database');
       return res.status(404).json({ error: 'Image not found' });
     }
 
@@ -77,8 +74,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'X-Title': 'OpenControlChat',
       },
     });
-
-    console.log('Calling OpenAI with image...');
 
     const response = await openai.chat.completions.create({
       model: 'nvidia/nemotron-nano-12b-v2-vl',

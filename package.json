@@ -1,6 +1,6 @@
 {
   "name": "occhat",
-  "version": "4.3.4",
+  "version": "4.3.5",
   "dependencies": {
     "@vercel/postgres": "^0.8.0",
     "openai": "^4.28.0"

@@ -64,14 +64,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const imageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    console.log('Saving image:', imageId, 'user:', userId, 'size:', buffer.length);
-    
     await sql`
       INSERT INTO images (id, user_id, data, mime_type)
       VALUES (${imageId}, ${userId}, ${image}, ${mimeType})
     `;
-
-    console.log('Image saved successfully:', imageId);
 
     res.json({
       id: imageId
