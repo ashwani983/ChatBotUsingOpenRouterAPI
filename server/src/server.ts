@@ -261,9 +261,18 @@ app.put('/api/settings', (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   const { message, conversationId, model, temperature, max_tokens, system_prompt } = req.body;
+  const apiKeyFromHeader = req.headers['x-api-key'] as string || req.headers['x-api-key'];
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
+  }
+
+  let apiKey = apiKeyFromHeader;
+  if (!apiKey) {
+    apiKey = getApiKey();
+  }
+  if (!apiKey) {
+    return res.status(401).json({ error: 'API key is required. Please add your OpenRouter API key in Settings.' });
   }
 
   let convId = conversationId;
@@ -302,7 +311,7 @@ app.post('/api/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  const currentApiKey = getApiKey();
+  const currentApiKey = apiKey || getApiKey();
   if (!currentApiKey) {
     return res.status(401).json({ error: 'API key is required. Please configure your OpenRouter API key in Settings.' });
   }
@@ -356,6 +365,7 @@ app.post('/api/chat/reset', (req, res) => {
 
 app.post('/api/vision/analyze', async (req, res) => {
   const { image, mimeType, imageId } = req.body;
+  const apiKeyFromHeader = req.headers['x-api-key'] as string || req.headers['x-api-key'];
 
   let imageData = image;
   let imgMimeType = mimeType;
@@ -383,7 +393,7 @@ app.post('/api/vision/analyze', async (req, res) => {
     return res.status(400).json({ error: 'Image data is required' });
   }
 
-  const currentApiKey = getApiKey();
+  const currentApiKey = apiKeyFromHeader || getApiKey();
   if (!currentApiKey) {
     return res.status(401).json({ error: 'API key is required. Please configure your OpenRouter API key in Settings.' });
   }
