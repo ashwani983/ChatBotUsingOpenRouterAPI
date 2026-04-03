@@ -1,17 +1,9 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 
-interface Message {
-  id: number;
-  conversation_id: number;
-  role: string;
-  content: string;
-  created_at: string;
-}
+const MAX_MESSAGES_PER_CONVERSATION = 100;
 
-const messageStore: Record<number, Message[]> = {};
-let messageIdCounter = 1;
-
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
@@ -21,12 +13,26 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { id } = req.query;
-  const convId = typeof id === 'string' ? parseInt(id) : 0;
+  const convId = parseInt(id as string);
 
-  if (req.method === 'GET') {
-    const messages = messageStore[convId] || [];
-    return res.json(messages);
+  if (isNaN(convId)) {
+    return res.status(400).json({ error: 'Invalid conversation ID' });
   }
 
-  res.status(405).json({ error: 'Method not allowed' });
+  try {
+    if (req.method === 'GET') {
+      const result = await sql`
+        SELECT id, conversation_id, role, content, created_at 
+        FROM messages 
+        WHERE conversation_id = ${convId}
+        ORDER BY created_at ASC
+      `;
+      return res.json(result.rows);
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error: any) {
+    console.error('Error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }

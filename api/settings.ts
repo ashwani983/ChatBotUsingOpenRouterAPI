@@ -1,6 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 
-const settingsStore: Record<string, string> = {
+const DEFAULT_SETTINGS = {
   theme: 'dark',
   model: 'meta-llama/llama-3.1-8b-instruct',
   temperature: '0.7',
@@ -13,7 +14,7 @@ const settingsStore: Record<string, string> = {
   code_auto_run: 'false'
 };
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
@@ -22,17 +23,40 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  if (req.method === 'GET') {
-    return res.json(settingsStore);
-  }
-
-  if (req.method === 'PUT') {
-    const updates = req.body;
-    for (const [key, value] of Object.entries(updates)) {
-      settingsStore[key] = String(value);
+  try {
+    if (req.method === 'GET') {
+      try {
+        const result = await sql`
+          SELECT key, value FROM settings WHERE key LIKE 'user_%'
+        `;
+        
+        const settings: any = { ...DEFAULT_SETTINGS };
+        for (const row of result.rows) {
+          settings[row.key.replace('user_', '')] = row.value;
+        }
+        return res.json(settings);
+      } catch {
+        return res.json(DEFAULT_SETTINGS);
+      }
     }
-    return res.json({ success: true });
-  }
 
-  res.status(405).json({ error: 'Method not allowed' });
+    if (req.method === 'PUT') {
+      const updates = req.body;
+      
+      for (const [key, value] of Object.entries(updates)) {
+        const dbKey = `user_${key}`;
+        await sql`
+          INSERT INTO settings (key, value) VALUES (${dbKey}, ${String(value)})
+          ON CONFLICT (key) DO UPDATE SET value = ${String(value)}
+        `;
+      }
+      
+      return res.json({ success: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error: any) {
+    console.error('Error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }

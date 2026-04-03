@@ -1,27 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 
-interface Conversation {
-  id: number;
-  title: string;
-  model: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Message {
-  id: number;
-  conversation_id: number;
-  role: string;
-  content: string;
-  created_at: string;
-}
-
-const conversationStore: Record<number, Conversation> = {};
-const messageStore: Record<number, Message[]> = {};
-let conversationIdCounter = 1;
-let messageIdCounter = 1;
-
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
@@ -31,34 +11,48 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { id } = req.query;
-  const convId = typeof id === 'string' ? parseInt(id) : 0;
+  const convId = parseInt(id as string);
 
-  if (req.method === 'GET') {
-    const conv = conversationStore[convId];
-    if (!conv) {
-      return res.status(404).json({ error: 'Conversation not found' });
-    }
-    return res.json(conv);
+  if (isNaN(convId)) {
+    return res.status(400).json({ error: 'Invalid conversation ID' });
   }
 
-  if (req.method === 'PUT') {
-    const { title } = req.body;
-    if (!conversationStore[convId]) {
-      return res.status(404).json({ error: 'Conversation not found' });
+  try {
+    if (req.method === 'GET') {
+      const result = await sql`
+        SELECT id, title, model, created_at, updated_at 
+        FROM conversations 
+        WHERE id = ${convId}
+      `;
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+      return res.json(result.rows[0]);
     }
-    conversationStore[convId].title = title || conversationStore[convId].title;
-    conversationStore[convId].updated_at = new Date().toISOString();
-    return res.json(conversationStore[convId]);
-  }
 
-  if (req.method === 'DELETE') {
-    if (!conversationStore[convId]) {
-      return res.status(404).json({ error: 'Conversation not found' });
+    if (req.method === 'PUT') {
+      const { title } = req.body;
+      const result = await sql`
+        UPDATE conversations 
+        SET title = COALESCE(${title}, title), updated_at = NOW()
+        WHERE id = ${convId}
+        RETURNING id, title, model, created_at, updated_at
+      `;
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+      return res.json(result.rows[0]);
     }
-    delete conversationStore[convId];
-    delete messageStore[convId];
-    return res.json({ success: true });
-  }
 
-  res.status(405).json({ error: 'Method not allowed' });
+    if (req.method === 'DELETE') {
+      await sql`DELETE FROM messages WHERE conversation_id = ${convId}`;
+      await sql`DELETE FROM conversations WHERE id = ${convId}`;
+      return res.json({ success: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error: any) {
+    console.error('Error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }

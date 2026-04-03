@@ -1,27 +1,84 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 
-interface Conversation {
-  id: number;
-  title: string;
-  model: string;
-  created_at: string;
-  updated_at: string;
+const MAX_MESSAGES_PER_CONVERSATION = 100;
+const DELETE_OLD_DAYS = 7;
+
+async function initDatabase() {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) DEFAULT 'New Chat',
+        model VARCHAR(100) DEFAULT 'meta-llama/llama-3.1-8b-instruct',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+    
+    await sql`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL,
+        content TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT
+      )
+    `;
+  } catch (error) {
+    console.error('Database initialization error:', error);
+  }
 }
 
-interface Message {
-  id: number;
-  conversation_id: number;
-  role: string;
-  content: string;
-  created_at: string;
+async function cleanupOldData() {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - DELETE_OLD_DAYS);
+    
+    await sql`
+      DELETE FROM messages 
+      WHERE conversation_id IN (
+        SELECT id FROM conversations WHERE updated_at < ${cutoffDate.toISOString()}
+      )
+    `;
+    
+    await sql`
+      DELETE FROM conversations WHERE updated_at < ${cutoffDate.toISOString()}
+    `;
+  } catch (error) {
+    console.error('Cleanup error:', error);
+  }
 }
 
-const conversationStore: Record<number, Conversation> = {};
-const messageStore: Record<number, Message[]> = {};
-let conversationIdCounter = 1;
-let messageIdCounter = 1;
+async function limitMessages(conversationId: number) {
+  try {
+    const result = await sql`
+      SELECT id FROM messages 
+      WHERE conversation_id = ${conversationId} 
+      ORDER BY created_at DESC 
+      OFFSET ${MAX_MESSAGES_PER_CONVERSATION}
+    `;
+    
+    if (result.rows.length > 0) {
+      const idsToDelete = result.rows.map((row: any) => row.id);
+      await sql`
+        DELETE FROM messages 
+        WHERE id IN (${idsToDelete.join(',')})
+      `;
+    }
+  } catch (error) {
+    console.error('Limit messages error:', error);
+  }
+}
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
@@ -30,33 +87,38 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  if (req.method === 'GET') {
-    const conversations = Object.values(conversationStore).sort(
-      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    );
-    return res.json(conversations);
-  }
+  try {
+    await initDatabase();
+    await cleanupOldData();
 
-  if (req.method === 'POST') {
-    const now = new Date().toISOString();
-    const id = conversationIdCounter++;
-    const newConv: Conversation = {
-      id,
-      title: 'New Chat',
-      model: 'meta-llama/llama-3.1-8b-instruct',
-      created_at: now,
-      updated_at: now,
-    };
-    conversationStore[id] = newConv;
-    messageStore[id] = [];
-    return res.json(newConv);
-  }
+    if (req.method === 'GET') {
+      const result = await sql`
+        SELECT id, title, model, created_at, updated_at 
+        FROM conversations 
+        ORDER BY updated_at DESC
+      `;
+      return res.json(result.rows);
+    }
 
-  if (req.method === 'DELETE') {
-    Object.keys(conversationStore).forEach(key => delete conversationStore[parseInt(key)]);
-    Object.keys(messageStore).forEach(key => delete messageStore[parseInt(key)]);
-    return res.json({ success: true });
-  }
+    if (req.method === 'POST') {
+      const result = await sql`
+        INSERT INTO conversations (title, model) 
+        VALUES ('New Chat', 'meta-llama/llama-3.1-8b-instruct')
+        RETURNING id, title, model, created_at, updated_at
+      `;
+      const newConv = result.rows[0];
+      return res.json(newConv);
+    }
 
-  res.status(405).json({ error: 'Method not allowed' });
+    if (req.method === 'DELETE') {
+      await sql`DELETE FROM messages`;
+      await sql`DELETE FROM conversations`;
+      return res.json({ success: true });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error: any) {
+    console.error('Error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }
