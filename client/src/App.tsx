@@ -747,6 +747,7 @@ function ChatApp() {
           isLoading={isLoading} 
           theme={theme}
           voiceEnabled={settings.voice_enabled === 'true'}
+          apiKey={apiKey}
         />
       </main>
 

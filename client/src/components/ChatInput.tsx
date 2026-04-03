@@ -7,6 +7,7 @@ interface ChatInputProps {
   isLoading: boolean;
   theme?: 'light' | 'dark';
   voiceEnabled?: boolean;
+  apiKey?: string;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
@@ -234,6 +235,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <div className="mt-4">
             <ImageUploader
               theme={theme}
+              apiKey={apiKey}
               onImageAnalyzed={(analysis) => {
                 setInput(prev => prev ? `${prev}\n\n[Image Analysis]\n${analysis}` : `[Image Analysis]\n${analysis}`);
                 setShowImageUploader(false);
