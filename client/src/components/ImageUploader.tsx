@@ -15,7 +15,9 @@ interface ImageUploaderProps {
   onClose: () => void;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey, onImageAnalyzed, onClose }) => {
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey = '', onImageAnalyzed, onClose }) => {
   const [images, setImages] = useState<ImageAttachment[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -133,10 +135,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey, onImageAna
       for (const img of images) {
         const response = await fetch('/api/vision/analyze', {
           method: 'POST',
-          headers: { 
+          headers: new Headers({
             'Content-Type': 'application/json',
-            'X-API-Key': apiKey
-          },
+            'X-API-Key': apiKey || ''
+          }),
           body: JSON.stringify({
             image: img.data,
             mimeType: img.mimeType

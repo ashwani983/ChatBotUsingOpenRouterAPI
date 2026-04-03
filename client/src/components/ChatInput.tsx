@@ -14,7 +14,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage, 
   isLoading, 
   theme = 'dark',
-  voiceEnabled = false
+  voiceEnabled = false,
+  apiKey = ''
 }) => {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
