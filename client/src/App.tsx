@@ -53,14 +53,17 @@ function ChatApp() {
     setApiKey(key);
   };
 
+  useEffect(() => {
+    if (apiKey) {
+      fetchConversations();
+    }
+  }, [apiKey]);
+
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
   useEffect(() => {
     fetchModels();
     fetchSettings();
-    if (apiKey) {
-      fetchConversations();
-    }
     
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
@@ -101,13 +104,12 @@ function ChatApp() {
       const res = await fetch('/api/conversations', {
         headers: { 'X-API-Key': apiKey }
       });
-      if (res.status === 401) {
-        localStorage.removeItem('apiKey');
-        setApiKey('');
+      if (!res.ok) {
+        console.error('Failed to fetch conversations:', res.status);
         return;
       }
       const data = await res.json();
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         setConversations(data);
         setFilteredConversations(data);
       }
@@ -158,7 +160,9 @@ function ChatApp() {
         headers: { 'X-API-Key': apiKey }
       });
       const data = await res.json();
-      setMessages(data);
+      if (data && data.length > 0) {
+        setMessages(data);
+      }
     } catch (err) {
       console.error('Failed to fetch messages:', err);
     }
