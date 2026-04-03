@@ -40,10 +40,12 @@ async function processFileReferences(message: string, apiKey: string): Promise<s
   if (!matches) return message;
   
   let processedMessage = message;
+  const fileIds: string[] = [];
   
   for (const url of matches) {
     try {
       const fileId = url.split('/api/files/')[1];
+      fileIds.push(fileId);
       const fileRes = await fetch(`https://opencontrolchat.vercel.app/api/files/${fileId}`, {
         headers: { 'X-API-Key': apiKey }
       });
@@ -58,6 +60,16 @@ async function processFileReferences(message: string, apiKey: string): Promise<s
       }
     } catch (error) {
       console.error('Error fetching file:', error);
+    }
+  }
+
+  if (fileIds.length > 0) {
+    try {
+      for (const fileId of fileIds) {
+        await sql`DELETE FROM files WHERE id = ${fileId}`;
+      }
+    } catch (error) {
+      console.error('Error deleting files:', error);
     }
   }
   
