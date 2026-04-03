@@ -49,9 +49,8 @@ function greet(name) {
 console.log(greet("Canvas User"));
 console.log("Result:", 2 + 2);
 
-// DOM manipulation is available
-document.body.innerHTML += '<p id="output"></p>';
-document.getElementById('output').textContent = 'DOM updated!';
+// Try returning a value to see it in the console
+return "Done!";
 `;
 
 const DEFAULT_CSS = `/* CSS Styles */
