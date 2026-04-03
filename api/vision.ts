@@ -1,5 +1,27 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 import OpenAI from 'openai';
+
+const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+if (dbUrl) {
+  process.env.POSTGRES_URL = dbUrl;
+}
+
+async function initImagesTable() {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS images (
+        id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(50) DEFAULT 'default',
+        data TEXT NOT NULL,
+        mime_type VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+  } catch (error) {
+    console.error('Init images table error:', error);
+  }
+}
 
 function getUserId(apiKey: string): string {
   return apiKey.slice(0, 16);
@@ -23,13 +45,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'API key is required' });
   }
 
-  const { image, mimeType } = req.body;
+  const userId = getUserId(apiKey);
+  const { imageId, mimeType } = req.body;
 
-  if (!image) {
-    return res.status(400).json({ error: 'Image data is required' });
+  if (!imageId) {
+    return res.status(400).json({ error: 'Image ID is required' });
   }
 
   try {
+    await initImagesTable();
+    
+    const result = await sql`
+      SELECT data, mime_type FROM images WHERE id = ${imageId} AND user_id = ${userId}
+    `;
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const image = result.rows[0].data;
+    const imgMimeType = result.rows[0].mime_type;
+
+    await sql`DELETE FROM images WHERE id = ${imageId}`;
+
     const openai = new OpenAI({
       apiKey: apiKey,
       baseURL: 'https://openrouter.ai/api/v1',
@@ -53,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             {
               type: 'image_url',
               image_url: {
-                url: `data:${mimeType || 'image/jpeg'};base64,${image}`
+                url: `data:${imgMimeType || 'image/jpeg'};base64,${image}`
               }
             }
           ]

@@ -133,7 +133,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey = '', onIma
       const analyses: string[] = [];
 
       for (const img of images) {
-        const response = await fetch('/api/vision/analyze', {
+        const uploadRes = await fetch('/api/images/upload', {
           method: 'POST',
           headers: new Headers({
             'Content-Type': 'application/json',
@@ -142,6 +142,24 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey = '', onIma
           body: JSON.stringify({
             image: img.data,
             mimeType: img.mimeType
+          })
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const uploadData = await uploadRes.json();
+        const imageId = uploadData.id;
+
+        const response = await fetch('/api/vision/analyze', {
+          method: 'POST',
+          headers: new Headers({
+            'Content-Type': 'application/json',
+            'X-API-Key': apiKey || ''
+          }),
+          body: JSON.stringify({
+            imageId: imageId
           })
         });
 
