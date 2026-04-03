@@ -2,7 +2,7 @@
 
 A responsive, full-stack AI chat interface similar to ChatGPT, built with React, Node.js, Express, and OpenRouter API.
 
-<img src="screenshot/Readme-Image.png" width="200" alt="OpenControlChat Logo">
+<img src="https://github.com/ashwani983/ChatBotUsingOpenRouterAPI/blob/main/screenshot/Readme-Image.png?raw=true" alt="OpenControlChat Logo">
 
 [![npm version](https://img.shields.io/npm/v/occhat.svg)](https://www.npmjs.com/package/occhat)
 [![npm downloads](https://img.shields.io/npm/dm/occhat.svg)](https://www.npmjs.com/package/occhat)

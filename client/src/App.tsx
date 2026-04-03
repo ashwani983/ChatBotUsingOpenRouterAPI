@@ -636,15 +636,16 @@ function ChatApp() {
               <div className="relative group">
                 <button
                   className={`p-2 ${hoverBg} rounded-lg transition-colors`}
-                  title="Export conversation"
-                  aria-label="Export conversation"
+                  title="Export & Share"
+                  aria-label="Export & Share"
                   aria-haspopup="true"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                 </button>
                 <div className={`absolute right-0 mt-2 w-48 ${theme === 'dark' ? 'bg-gray-700' : 'bg-white'} rounded-lg shadow-lg border ${borderColor} opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10`} role="menu">
+                  <div className={`px-4 py-2 text-xs font-semibold ${mutedText} uppercase`}>Export</div>
                   <button
                     onClick={() => exportConversation('markdown')}
                     className={`w-full text-left px-4 py-2 text-sm ${hoverBg} transition-colors`}
@@ -666,20 +667,17 @@ function ChatApp() {
                   >
                     Export as PDF
                   </button>
+                  <div className={`border-t ${borderColor} my-1`} />
+                  <div className={`px-4 py-2 text-xs font-semibold ${mutedText} uppercase`}>Share</div>
+                  <button
+                    onClick={() => setShareOpen(true)}
+                    className={`w-full text-left px-4 py-2 text-sm ${hoverBg} transition-colors`}
+                    role="menuitem"
+                  >
+                    Share Conversation
+                  </button>
                 </div>
               </div>
-            )}
-            {currentConversationId && (
-              <button
-                onClick={() => setShareOpen(true)}
-                className={`p-2 ${hoverBg} rounded-lg transition-colors`}
-                title="Share conversation"
-                aria-label="Share conversation"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-                </svg>
-              </button>
             )}
             {settings.tts_enabled === 'true' && (
               <button
