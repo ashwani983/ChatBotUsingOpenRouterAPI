@@ -771,8 +771,10 @@ function ChatApp() {
         conversationTitle={currentConversation?.title || ''}
         theme={theme}
       />
-      
-      <Canvas theme={theme} />
+       
+      <div className="hidden md:block">
+        <Canvas theme={theme} />
+      </div>
       <Toast />
 
       <div
