@@ -387,6 +387,8 @@ function ChatApp() {
           headers: { 'X-API-Key': apiKey }
         });
         const newConv = await res.json();
+        const title = content.length > 30 ? content.substring(0, 30) + '...' : content;
+        newConv.title = title;
         setConversations(prev => [newConv, ...prev]);
         setFilteredConversations(prev => [newConv, ...prev]);
         convId = newConv.id;
