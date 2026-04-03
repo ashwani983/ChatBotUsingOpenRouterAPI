@@ -1,6 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
-import { readFileSync, existsSync, readdirSync } from 'fs';
-import path from 'path';
+import { sql } from '@vercel/postgres';
+
+const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+if (dbUrl) {
+  process.env.POSTGRES_URL = dbUrl;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,43 +26,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const filesDir = path.join(process.cwd(), 'data', 'files');
-    
-    if (!existsSync(filesDir)) {
+    const result = await sql`
+      SELECT filename, mime_type, data FROM files WHERE id = ${id as string}
+    `;
+
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    const files = readdirSync(filesDir);
-    const file = files.find(f => f.startsWith(id as string));
+    const { filename, mime_type, data } = result.rows[0];
+    const buffer = Buffer.from(data, 'base64');
 
-    if (!file) {
-      return res.status(404).json({ error: 'File not found' });
-    }
-
-    const filePath = path.join(filesDir, file);
-    const buffer = readFileSync(filePath);
-    const ext = path.extname(file);
-    
-    const mimeTypes: Record<string, string> = {
-      '.pdf': 'application/pdf',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.webp': 'image/webp',
-      '.txt': 'text/plain',
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.js': 'text/javascript',
-      '.json': 'application/json',
-      '.xml': 'application/xml',
-      '.md': 'text/markdown',
-    };
-
-    const mimeType = mimeTypes[ext] || 'application/octet-stream';
-
-    res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${file}"`);
+    res.setHeader('Content-Type', mime_type);
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.send(buffer);
   } catch (error) {
     console.error('File download error:', error);
