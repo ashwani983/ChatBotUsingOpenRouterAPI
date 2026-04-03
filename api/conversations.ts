@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
 import { sql } from '@vercel/postgres';
 
+// v4.3.1 - user isolation fix
 const MAX_MESSAGES_PER_CONVERSATION = 100;
 const DELETE_OLD_DAYS = 7;
 
