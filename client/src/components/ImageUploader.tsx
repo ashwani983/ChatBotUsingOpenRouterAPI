@@ -163,9 +163,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ theme, apiKey = '', onIma
           })
         });
 
-        console.log('Vision response status:', response.status);
-        
         if (!response.ok) {
+          throw new Error('Failed to analyze image');
+        }
+
+        const data = await response.json();
+        analyses.push(data.analysis);
       }
 
       const combinedAnalysis = analyses.join('\n\n---\n\n');
