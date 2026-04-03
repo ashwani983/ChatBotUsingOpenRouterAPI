@@ -10,7 +10,7 @@ async function initFilesTable() {
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS files (
-        id SERIAL PRIMARY KEY,
+        id VARCHAR(50) PRIMARY KEY,
         user_id VARCHAR(50) DEFAULT 'default',
         filename VARCHAR(255) NOT NULL,
         mime_type VARCHAR(100) NOT NULL,
@@ -19,6 +19,11 @@ async function initFilesTable() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
+    
+    try {
+      await sql`ALTER TABLE files ALTER COLUMN id TYPE VARCHAR(50)`;
+    } catch {
+    }
   } catch (error) {
     console.error('Init files table error:', error);
   }
