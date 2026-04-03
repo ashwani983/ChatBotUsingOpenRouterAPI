@@ -33,7 +33,7 @@ async function limitMessages(conversationId: number) {
   }
 }
 
-async function processFileReferences(message: string, apiKey: string): Promise<string> {
+async function processFileReferences(message: string, apiKey: string, isLocalhost: boolean = false): Promise<string> {
   const fileUrlRegex = /\/api\/files\/([^\s\)]+)/g;
   const matches = message.match(fileUrlRegex);
   
@@ -42,11 +42,13 @@ async function processFileReferences(message: string, apiKey: string): Promise<s
   let processedMessage = message;
   const fileIds: string[] = [];
   
+  const baseUrl = isLocalhost ? 'http://localhost:3000' : 'https://opencontrolchat.vercel.app';
+  
   for (const url of matches) {
     try {
       const fileId = url.split('/api/files/')[1];
       fileIds.push(fileId);
-      const fileRes = await fetch(`https://opencontrolchat.vercel.app/api/files/${fileId}`, {
+      const fileRes = await fetch(`${baseUrl}/api/files/${fileId}`, {
         headers: { 'X-API-Key': apiKey }
       });
       
@@ -128,7 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       WHERE id = ${convId} AND user_id = ${userId}
     `;
 
-    const processedMessage = await processFileReferences(message, apiKey);
+    const processedMessage = await processFileReferences(message, apiKey, req.headers.referer?.includes('localhost'));
 
     await sql`
       INSERT INTO messages (conversation_id, role, content)

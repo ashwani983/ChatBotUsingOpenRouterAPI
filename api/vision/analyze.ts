@@ -1,19 +1,27 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
 import { sql } from '@vercel/postgres';
+import { existsSync, unlinkSync, readFileSync } from 'fs';
+import path from 'path';
 import OpenAI from 'openai';
 
 const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+const useDatabase = !!dbUrl;
+
 if (dbUrl) {
   process.env.POSTGRES_URL = dbUrl;
 }
 
+const imagesDir = path.join(process.cwd(), 'data', 'images');
+
 async function initImagesTable() {
+  if (!useDatabase) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS images (
         id VARCHAR(50) PRIMARY KEY,
         user_id VARCHAR(50) DEFAULT 'default',
-        data TEXT NOT NULL,
+        data TEXT,
+        file_path VARCHAR(255),
         mime_type VARCHAR(100) NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       )
@@ -46,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const userId = getUserId(apiKey);
-  const { imageId, mimeType } = req.body;
+  const { imageId } = req.body;
 
   if (!imageId) {
     return res.status(400).json({ error: 'Image ID is required' });
@@ -56,15 +64,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await initImagesTable();
     
     const result = await sql`
-      SELECT data, mime_type FROM images WHERE id = ${imageId} AND user_id = ${userId}
+      SELECT data, file_path, mime_type FROM images WHERE id = ${imageId} AND user_id = ${userId}
     `;
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Image not found' });
     }
 
-    const image = result.rows[0].data;
-    const imgMimeType = result.rows[0].mime_type;
+    let imageData: string;
+    let imgMimeType: string;
+
+    if (useDatabase && result.rows[0].data) {
+      imageData = result.rows[0].data;
+      imgMimeType = result.rows[0].mime_type;
+    } else if (result.rows[0].file_path) {
+      const buffer = readFileSync(result.rows[0].file_path);
+      imageData = buffer.toString('base64');
+      imgMimeType = result.rows[0].mime_type;
+      
+      if (existsSync(result.rows[0].file_path)) {
+        unlinkSync(result.rows[0].file_path);
+      }
+    } else {
+      return res.status(404).json({ error: 'Image data not found' });
+    }
+
+    await sql`DELETE FROM images WHERE id = ${imageId}`;
 
     const openai = new OpenAI({
       apiKey: apiKey,
@@ -89,15 +114,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             {
               type: 'image_url',
               image_url: {
-                url: `data:${imgMimeType || 'image/jpeg'};base64,${image}`
+                url: `data:${imgMimeType || 'image/jpeg'};base64,${imageData}`
               }
             }
           ]
         }
       ]
     });
-
-    await sql`DELETE FROM images WHERE id = ${imageId}`;
 
     const analysis = response.choices[0]?.message?.content || 'Unable to analyze image.';
     res.json({ analysis });

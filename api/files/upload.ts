@@ -1,9 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
 import { sql } from '@vercel/postgres';
+import { writeFileSync, existsSync, mkdirSync, unlinkSync, readFileSync } from 'fs';
+import path from 'path';
 
 const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+const useDatabase = !!dbUrl;
+
 if (dbUrl) {
   process.env.POSTGRES_URL = dbUrl;
+}
+
+const filesDir = path.join(process.cwd(), 'data', 'files');
+if (!existsSync(filesDir)) {
+  mkdirSync(filesDir, { recursive: true });
 }
 
 async function initFilesTable() {
@@ -14,19 +23,19 @@ async function initFilesTable() {
         user_id VARCHAR(50) DEFAULT 'default',
         filename VARCHAR(255) NOT NULL,
         mime_type VARCHAR(100) NOT NULL,
-        data TEXT NOT NULL,
+        data TEXT,
+        file_path VARCHAR(255),
         size INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    
-    try {
-      await sql`ALTER TABLE files ALTER COLUMN id TYPE VARCHAR(50)`;
-    } catch {
-    }
   } catch (error) {
     console.error('Init files table error:', error);
   }
+}
+
+function getUserId(apiKey: string): string {
+  return apiKey.slice(0, 16);
 }
 
 const ALLOWED_TYPES = [
@@ -55,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const apiKey = req.headers['x-api-key'] as string;
-  const userId = apiKey ? apiKey.slice(0, 16) : 'default';
+  const userId = apiKey ? getUserId(apiKey) : 'default';
 
   const { file, filename, mimeType } = req.body;
 
@@ -68,8 +77,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await initFilesTable();
-
     const buffer = Buffer.from(file, 'base64');
     
     if (buffer.length > MAX_FILE_SIZE) {
@@ -78,10 +85,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const fileId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    await sql`
-      INSERT INTO files (id, user_id, filename, mime_type, data, size)
-      VALUES (${fileId}, ${userId}, ${filename}, ${mimeType}, ${file}, ${buffer.length})
-    `;
+    if (useDatabase) {
+      await initFilesTable();
+      await sql`
+        INSERT INTO files (id, user_id, filename, mime_type, data, size)
+        VALUES (${fileId}, ${userId}, ${filename}, ${mimeType}, ${file}, ${buffer.length})
+      `;
+    } else {
+      const filePath = path.join(filesDir, `${fileId}.${path.extname(filename)}`);
+      writeFileSync(filePath, buffer);
+      
+      await sql`
+        INSERT INTO files (id, user_id, filename, file_path, mime_type, size)
+        VALUES (${fileId}, ${userId}, ${filename}, ${filePath}, ${mimeType}, ${buffer.length})
+      `;
+    }
 
     res.json({
       id: fileId,

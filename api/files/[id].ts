@@ -1,7 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
 import { sql } from '@vercel/postgres';
+import { existsSync, readFileSync } from 'fs';
+import path from 'path';
 
 const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+const useDatabase = !!dbUrl;
+
 if (dbUrl) {
   process.env.POSTGRES_URL = dbUrl;
 }
@@ -9,7 +13,7 @@ if (dbUrl) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-API-Key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -27,15 +31,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const result = await sql`
-      SELECT filename, mime_type, data FROM files WHERE id = ${id as string}
+      SELECT filename, mime_type, data, file_path FROM files WHERE id = ${id as string}
     `;
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    const { filename, mime_type, data } = result.rows[0];
-    const buffer = Buffer.from(data, 'base64');
+    const { filename, mime_type, data, file_path } = result.rows[0];
+    let buffer: Buffer;
+
+    if (useDatabase && data) {
+      buffer = Buffer.from(data, 'base64');
+    } else if (file_path && existsSync(file_path)) {
+      buffer = readFileSync(file_path);
+    } else {
+      return res.status(404).json({ error: 'File data not found' });
+    }
 
     res.setHeader('Content-Type', mime_type);
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
