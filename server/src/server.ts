@@ -355,9 +355,31 @@ app.post('/api/chat/reset', (req, res) => {
 });
 
 app.post('/api/vision/analyze', async (req, res) => {
-  const { image, mimeType } = req.body;
+  const { image, mimeType, imageId } = req.body;
 
-  if (!image) {
+  let imageData = image;
+  let imgMimeType = mimeType;
+
+  if (imageId) {
+    try {
+      const files = fs.readdirSync(imagesDir);
+      const imageFile = files.find(f => f.startsWith(imageId));
+      if (imageFile) {
+        const filePath = path.join(imagesDir, imageFile);
+        const buffer = fs.readFileSync(filePath);
+        imageData = buffer.toString('base64');
+        const ext = path.extname(imageFile).toLowerCase();
+        imgMimeType = ext === '.png' ? 'image/png' : 
+                      ext === '.gif' ? 'image/gif' : 
+                      ext === '.webp' ? 'image/webp' : 'image/jpeg';
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.error('Error loading image:', e);
+    }
+  }
+
+  if (!imageData) {
     return res.status(400).json({ error: 'Image data is required' });
   }
 
@@ -383,7 +405,7 @@ app.post('/api/vision/analyze', async (req, res) => {
             {
               type: 'image_url',
               image_url: {
-                url: `data:${mimeType || 'image/jpeg'};base64,${image}`
+                url: `data:${imgMimeType || 'image/jpeg'};base64,${imageData}`
               }
             }
           ]
@@ -403,6 +425,42 @@ const filesDir = path.join(dataDir, 'files');
 if (!fs.existsSync(filesDir)) {
   fs.mkdirSync(filesDir, { recursive: true });
 }
+
+const imagesDir = path.join(dataDir, 'images');
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+app.post('/api/images/upload', (req, res) => {
+  const { image, mimeType } = req.body;
+
+  if (!image) {
+    return res.status(400).json({ error: 'Image data is required' });
+  }
+
+  try {
+    const buffer = Buffer.from(image, 'base64');
+    
+    if (buffer.length > MAX_IMAGE_SIZE) {
+      return res.status(400).json({ error: 'Image too large. Max size is 5MB.' });
+    }
+
+    const imageId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const ext = mimeType === 'image/png' ? '.png' : 
+                mimeType === 'image/gif' ? '.gif' : 
+                mimeType === 'image/webp' ? '.webp' : '.jpg';
+    const filePath = path.join(imagesDir, `${imageId}${ext}`);
+    
+    fs.writeFileSync(filePath, buffer);
+
+    res.json({ id: imageId });
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
 
 const ALLOWED_TYPES = [
   'application/pdf',
