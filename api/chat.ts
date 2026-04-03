@@ -69,6 +69,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         RETURNING id
       `;
       convId = result.rows[0].id;
+    } else {
+      const check = await sql`
+        SELECT id FROM conversations WHERE id = ${convId} AND user_id = ${userId}
+      `;
+      if (check.rows.length === 0) {
+        return res.status(403).json({ error: 'Conversation not found' });
+      }
     }
 
     const title = message.length > 30 ? message.substring(0, 30) + '...' : message;

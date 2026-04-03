@@ -126,7 +126,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         VALUES (${userId}, 'New Chat', 'meta-llama/llama-3.1-8b-instruct')
         RETURNING id, title, model, created_at, updated_at
       `;
-      const newConv = result.rows[0];
+      const newConv = {
+        id: result.rows[0].id,
+        title: result.rows[0].title,
+        model: result.rows[0].model,
+        created_at: result.rows[0].created_at,
+        updated_at: result.rows[0].updated_at
+      };
       return res.json(newConv);
     }
 
