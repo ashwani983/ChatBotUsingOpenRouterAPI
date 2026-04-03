@@ -4,12 +4,9 @@ import { sql } from '@vercel/postgres';
 const MAX_MESSAGES_PER_CONVERSATION = 100;
 const DELETE_OLD_DAYS = 7;
 
-const connectionString = process.env.DATABASE_URL || 
-  process.env.opencontrolchat_DATABASE_URL || 
-  process.env.POSTGRES_URL;
-
-if (connectionString) {
-  process.env.POSTGRES_URL = connectionString;
+const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+if (dbUrl) {
+  process.env.POSTGRES_URL = dbUrl;
 }
 
 async function initDatabase() {

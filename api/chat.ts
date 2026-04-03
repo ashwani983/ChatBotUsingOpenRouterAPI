@@ -4,12 +4,9 @@ import OpenAI from 'openai';
 
 const MAX_MESSAGES_PER_CONVERSATION = 100;
 
-const connectionString = process.env.DATABASE_URL || 
-  process.env.opencontrolchat_DATABASE_URL || 
-  process.env.POSTGRES_URL;
-
-if (connectionString) {
-  process.env.POSTGRES_URL = connectionString;
+const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+if (dbUrl) {
+  process.env.POSTGRES_URL = dbUrl;
 }
 
 async function limitMessages(conversationId: number) {

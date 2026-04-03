@@ -1,6 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/postgres';
 import { sql } from '@vercel/postgres';
 
+const dbUrl = process.env.opencontrolchat_DATABASE_URL || process.env.DATABASE_URL;
+if (dbUrl) {
+  process.env.POSTGRES_URL = dbUrl;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
