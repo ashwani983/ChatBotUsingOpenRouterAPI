@@ -519,8 +519,15 @@ function ChatApp() {
 
   return (
     <div className={`flex h-screen ${bgColor} ${textColor}`} role="application" aria-label="OpenControlChat Application">
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-10 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside
-        className={`${
+        className={`fixed md:relative z-30 md:z-auto inset-y-0 left-0 ${
           sidebarOpen ? 'w-72' : 'w-0'
         } ${sidebarBg} transition-all duration-300 flex-shrink-0 overflow-hidden border-r ${borderColor}`}
         aria-label="Chat sidebar"
@@ -535,7 +542,7 @@ function ChatApp() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            New Chat
+            <span className="hidden sm:inline">New Chat</span>
           </button>
           
           <div className="mt-3 relative">
