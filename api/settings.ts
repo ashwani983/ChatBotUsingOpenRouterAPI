@@ -33,10 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const apiKey = req.headers['x-api-key'] as string;
-  if (!apiKey) {
-    return res.status(401).json({ error: 'API key is required' });
-  }
-  const userId = getUserId(apiKey);
+  const userId = apiKey ? getUserId(apiKey) : 'default';
   const userPrefix = `user_${userId}_`;
 
   try {
@@ -57,6 +54,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'PUT') {
+      if (!apiKey) {
+        return res.status(401).json({ error: 'API key is required to save settings' });
+      }
       const updates = req.body;
       
       for (const [key, value] of Object.entries(updates)) {
