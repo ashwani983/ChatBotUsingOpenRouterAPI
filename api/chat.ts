@@ -33,6 +33,37 @@ async function limitMessages(conversationId: number) {
   }
 }
 
+async function processFileReferences(message: string, apiKey: string): Promise<string> {
+  const fileUrlRegex = /\/api\/files\/([^\s\)]+)/g;
+  const matches = message.match(fileUrlRegex);
+  
+  if (!matches) return message;
+  
+  let processedMessage = message;
+  
+  for (const url of matches) {
+    try {
+      const fileId = url.split('/api/files/')[1];
+      const fileRes = await fetch(`https://opencontrolchat.vercel.app/api/files/${fileId}`, {
+        headers: { 'X-API-Key': apiKey }
+      });
+      
+      if (fileRes.ok) {
+        const content = await fileRes.text();
+        const filename = fileId.split('-').slice(1).join('-') || 'file';
+        processedMessage = processedMessage.replace(
+          url, 
+          `\n\n[File content from ${filename}]:\n${content}\n`
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching file:', error);
+    }
+  }
+  
+  return processedMessage;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -85,11 +116,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       WHERE id = ${convId} AND user_id = ${userId}
     `;
 
+    const processedMessage = await processFileReferences(message, apiKey);
+
     await sql`
       INSERT INTO messages (conversation_id, role, content)
-      VALUES (${convId}, 'user', ${message})
+      VALUES (${convId}, 'user', ${processedMessage})
     `;
-
+    
     const openai = new OpenAI({
       apiKey: apiKey,
       baseURL: 'https://openrouter.ai/api/v1',
@@ -108,7 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: model || 'meta-llama/llama-3.1-8b-instruct',
       messages: [
         { role: 'system', content: system_prompt || 'You are a helpful AI assistant.' },
-        { role: 'user', content: message }
+        { role: 'user', content: processedMessage }
       ],
       temperature: temperature || 0.7,
       max_tokens: max_tokens || 2048,
