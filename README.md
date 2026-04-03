@@ -1,6 +1,8 @@
-# OCCChat (OpenControlChat)
+# OpenControlChat (occhat)
 
 A responsive, full-stack AI chat interface similar to ChatGPT, built with React, Node.js, Express, and OpenRouter API.
+
+<img src="screenshot/opencontrolchat-logo.png" width="200" alt="OpenControlChat Logo">
 
 [![npm version](https://img.shields.io/npm/v/occhat.svg)](https://www.npmjs.com/package/occhat)
 [![npm downloads](https://img.shields.io/npm/dm/occhat.svg)](https://www.npmjs.com/package/occhat)

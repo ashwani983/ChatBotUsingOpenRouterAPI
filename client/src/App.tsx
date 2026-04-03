@@ -58,7 +58,9 @@ function ChatApp() {
   useEffect(() => {
     fetchModels();
     fetchSettings();
-    fetchConversations();
+    if (apiKey) {
+      fetchConversations();
+    }
     
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
@@ -115,12 +117,10 @@ function ChatApp() {
   };
 
   const searchConversations = async (query: string) => {
-    if (!apiKey) return;
     try {
-      const res = await fetch(`/api/conversations/search?q=${encodeURIComponent(query)}`, {
-        headers: { 'X-API-Key': apiKey }
-      });
-      const data = await res.json();
+      const data = conversations.filter(c => 
+        c.title.toLowerCase().includes(query.toLowerCase())
+      );
       setFilteredConversations(data);
     } catch (err) {
       console.error('Failed to search conversations:', err);
