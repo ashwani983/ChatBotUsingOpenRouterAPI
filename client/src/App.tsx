@@ -516,6 +516,7 @@ function ChatApp() {
   const textColor = theme === 'dark' ? 'text-white' : 'text-gray-900';
   const borderColor = theme === 'dark' ? 'border-gray-700' : 'border-gray-200';
   const hoverBg = theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-200';
+  const mutedText = theme === 'dark' ? 'text-gray-400' : 'text-gray-600';
 
   const displayConversations = searchQuery.trim() ? filteredConversations : conversations;
 
