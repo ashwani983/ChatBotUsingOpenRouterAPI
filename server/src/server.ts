@@ -261,7 +261,10 @@ app.put('/api/settings', (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   const { message, conversationId, model, temperature, max_tokens, system_prompt } = req.body;
-  const apiKeyFromHeader = req.headers['x-api-key'] as string || req.headers['x-api-key'];
+  const apiKeyFromHeader = (req.headers['x-api-key'] as string) || (req.headers['X-API-Key'] as string);
+
+  console.log('Headers:', req.headers);
+  console.log('API Key from header:', apiKeyFromHeader ? 'present' : 'missing');
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
@@ -274,6 +277,8 @@ app.post('/api/chat', async (req, res) => {
   if (!apiKey) {
     return res.status(401).json({ error: 'API key is required. Please add your OpenRouter API key in Settings.' });
   }
+
+  console.log('Using API key:', apiKey.substring(0, 10) + '...');
 
   let convId = conversationId;
   if (!convId) {
