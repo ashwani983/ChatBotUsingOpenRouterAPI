@@ -148,26 +148,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: error.message });
   }
 }
-
-    if (req.method === 'POST') {
-      const result = await sql`
-        INSERT INTO conversations (title, model) 
-        VALUES ('New Chat', 'meta-llama/llama-3.1-8b-instruct')
-        RETURNING id, title, model, created_at, updated_at
-      `;
-      const newConv = result.rows[0];
-      return res.json(newConv);
-    }
-
-    if (req.method === 'DELETE') {
-      await sql`DELETE FROM messages`;
-      await sql`DELETE FROM conversations`;
-      return res.json({ success: true });
-    }
-
-    return res.status(405).json({ error: 'Method not allowed' });
-  } catch (error: any) {
-    console.error('Error:', error.message);
-    return res.status(500).json({ error: error.message });
-  }
-}
