@@ -55,15 +55,10 @@ function ChatApp() {
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
 
-  const [hasInitialized, setHasInitialized] = useState(false);
-
   useEffect(() => {
-    if (!apiKey) return;
-    if (hasInitialized) return;
-    setHasInitialized(true);
-    fetchConversations();
     fetchModels();
     fetchSettings();
+    fetchConversations();
     
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
@@ -132,11 +127,8 @@ function ChatApp() {
   };
 
   const fetchModels = async () => {
-    if (!apiKey) return;
     try {
-      const res = await fetch('/api/models', {
-        headers: { 'X-API-Key': apiKey }
-      });
+      const res = await fetch('/api/models');
       const data = await res.json();
       setModels(data);
     } catch (err) {
@@ -145,11 +137,8 @@ function ChatApp() {
   };
 
   const fetchSettings = async () => {
-    if (!apiKey) return;
     try {
-      const res = await fetch('/api/settings', {
-        headers: { 'X-API-Key': apiKey }
-      });
+      const res = await fetch('/api/settings');
       const data = await res.json();
       setSettings(prev => ({ ...prev, ...data }));
       if (data.theme === 'light') {
