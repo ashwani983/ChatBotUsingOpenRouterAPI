@@ -105,8 +105,10 @@ function ChatApp() {
         return;
       }
       const data = await res.json();
-      setConversations(data);
-      setFilteredConversations(data);
+      if (data && data.length > 0) {
+        setConversations(data);
+        setFilteredConversations(data);
+      }
     } catch (err) {
       console.error('Failed to fetch conversations:', err);
     }
@@ -470,7 +472,6 @@ function ChatApp() {
         setTimeout(() => speakText(fullContent), 100);
       }
 
-      await fetchConversations();
       await fetchMessages(convId);
     } catch (error) {
       console.error('Error:', error);
