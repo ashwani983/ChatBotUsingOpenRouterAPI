@@ -45,6 +45,8 @@ async function initDatabase() {
     `;
     
     await sql`CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id)`;
+    
+    await sql`ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) DEFAULT 'default'`;
   } catch (error) {
     console.error('Database initialization error:', error);
   }

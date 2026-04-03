@@ -142,7 +142,9 @@ function ChatApp() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch('/api/settings', {
+        headers: { 'X-API-Key': apiKey }
+      });
       const data = await res.json();
       setSettings(prev => ({ ...prev, ...data }));
       if (data.theme === 'light') {
