@@ -6,6 +6,10 @@ if (dbUrl) {
   process.env.POSTGRES_URL = dbUrl;
 }
 
+function getUserId(apiKey: string): string {
+  return apiKey.slice(0, 8);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, OPTIONS');
@@ -14,6 +18,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  const apiKey = req.headers['x-api-key'] as string;
+  if (!apiKey) {
+    return res.status(401).json({ error: 'API key is required' });
+  }
+  const userId = getUserId(apiKey);
 
   const { id } = req.query;
   const convId = parseInt(id as string);
@@ -27,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const result = await sql`
         SELECT id, title, model, created_at, updated_at 
         FROM conversations 
-        WHERE id = ${convId}
+        WHERE id = ${convId} AND user_id = ${userId}
       `;
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Conversation not found' });
@@ -40,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const result = await sql`
         UPDATE conversations 
         SET title = COALESCE(${title}, title), updated_at = NOW()
-        WHERE id = ${convId}
+        WHERE id = ${convId} AND user_id = ${userId}
         RETURNING id, title, model, created_at, updated_at
       `;
       if (result.rows.length === 0) {
@@ -51,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'DELETE') {
       await sql`DELETE FROM messages WHERE conversation_id = ${convId}`;
-      await sql`DELETE FROM conversations WHERE id = ${convId}`;
+      await sql`DELETE FROM conversations WHERE id = ${convId} AND user_id = ${userId}`;
       return res.json({ success: true });
     }
 

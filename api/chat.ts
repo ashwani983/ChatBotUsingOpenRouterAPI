@@ -9,6 +9,10 @@ if (dbUrl) {
   process.env.POSTGRES_URL = dbUrl;
 }
 
+function getUserId(apiKey: string): string {
+  return apiKey.slice(0, 8);
+}
+
 async function limitMessages(conversationId: number) {
   try {
     const result = await sql`
@@ -55,12 +59,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   let convId = conversationId;
+  const userId = getUserId(apiKey);
 
   try {
     if (!convId) {
       const result = await sql`
-        INSERT INTO conversations (title, model) 
-        VALUES ('New Chat', ${model || 'meta-llama/llama-3.1-8b-instruct'})
+        INSERT INTO conversations (user_id, title, model) 
+        VALUES (${userId}, 'New Chat', ${model || 'meta-llama/llama-3.1-8b-instruct'})
         RETURNING id
       `;
       convId = result.rows[0].id;
@@ -70,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await sql`
       UPDATE conversations 
       SET title = ${title}, updated_at = NOW() 
-      WHERE id = ${convId}
+      WHERE id = ${convId} AND user_id = ${userId}
     `;
 
     await sql`

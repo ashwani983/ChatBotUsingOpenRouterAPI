@@ -6,7 +6,9 @@ if (dbUrl) {
   process.env.POSTGRES_URL = dbUrl;
 }
 
-const MAX_MESSAGES_PER_CONVERSATION = 100;
+function getUserId(apiKey: string): string {
+  return apiKey.slice(0, 8);
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,6 +18,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  const apiKey = req.headers['x-api-key'] as string;
+  if (!apiKey) {
+    return res.status(401).json({ error: 'API key is required' });
+  }
+  const userId = getUserId(apiKey);
 
   const { id } = req.query;
   const convId = parseInt(id as string);
@@ -27,10 +35,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method === 'GET') {
       const result = await sql`
-        SELECT id, conversation_id, role, content, created_at 
-        FROM messages 
-        WHERE conversation_id = ${convId}
-        ORDER BY created_at ASC
+        SELECT m.id, m.conversation_id, m.role, m.content, m.created_at 
+        FROM messages m
+        JOIN conversations c ON m.conversation_id = c.id
+        WHERE m.conversation_id = ${convId} AND c.user_id = ${userId}
+        ORDER BY m.created_at ASC
       `;
       return res.json(result.rows);
     }
