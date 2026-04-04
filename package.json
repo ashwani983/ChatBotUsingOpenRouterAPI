@@ -1,6 +1,9 @@
 {
   "name": "occhat",
   "version": "4.3.6",
+  "bin": {
+    "occhat": "./cli.js"
+  },
   "dependencies": {
     "@vercel/postgres": "^0.8.0",
     "openai": "^4.28.0"
