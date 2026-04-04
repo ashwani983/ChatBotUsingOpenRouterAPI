@@ -131,7 +131,6 @@ const AVAILABLE_MODELS = [
 ];
 
 function createOpenAIClient(key: string) {
-  console.log('Creating OpenAI client with key:', key ? key.substring(0, 15) + '...' : 'EMPTY');
   return new OpenAI({
     apiKey: key,
     baseURL: 'https://openrouter.ai/api/v1',
