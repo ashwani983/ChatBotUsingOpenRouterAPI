@@ -88,37 +88,39 @@ function saveDatabase() {
   }
 }
 
-let apiKey = process.env.OPENROUTER_API_KEY;
-let clientApiKey: string | null = null;
+let serverApiKey = process.env.OPENROUTER_API_KEY;
 
-if (!apiKey) {
+if (!serverApiKey) {
   const configPath = path.join(home, '.occhatrc');
   try {
     if (fs.existsSync(configPath)) {
       const configContent = fs.readFileSync(configPath, 'utf-8');
       const config = JSON.parse(configContent);
-      apiKey = config.apiKey;
+      serverApiKey = config.apiKey;
     }
   } catch (e) {
     console.error('Error reading config file:', e);
   }
 }
 
+function getApiKeyFromRequest(reqApiKey: string | undefined): { key: string; source: string } {
+  if (reqApiKey && reqApiKey.trim()) {
+    if (serverApiKey && reqApiKey !== serverApiKey) {
+      console.warn('Client API key differs from server API key - using client key');
+    }
+    return { key: reqApiKey, source: 'client' };
+  }
+  
+  if (serverApiKey) {
+    return { key: serverApiKey, source: 'server' };
+  }
+  
+  return { key: '', source: 'none' };
+}
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-app.use((req, res, next) => {
-  const apiKeyHeader = req.headers['x-api-key'] as string;
-  if (apiKeyHeader) {
-    clientApiKey = apiKeyHeader;
-  }
-  next();
-});
-
-function getApiKey(): string {
-  return clientApiKey || apiKey || '';
-}
 
 const AVAILABLE_MODELS = [
   { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', provider: 'Meta' },
@@ -267,12 +269,9 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ error: 'Message is required' });
   }
 
-  let apiKey = apiKeyFromHeader;
-  if (!apiKey) {
-    apiKey = getApiKey();
-  }
-  if (!apiKey) {
-    return res.status(401).json({ error: 'API key is required. Please add your OpenRouter API key in Settings.' });
+  const apiKeyInfo = getApiKeyFromRequest(apiKeyFromHeader);
+  if (!apiKeyInfo.key) {
+    return res.status(401).json({ error: 'API key is required. Please add your OpenRouter API key in Settings or set OPENROUTER_API_KEY environment variable.' });
   }
 
   let convId = conversationId;
@@ -311,12 +310,7 @@ app.post('/api/chat', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
-  const currentApiKey = apiKey || getApiKey();
-  if (!currentApiKey) {
-    return res.status(401).json({ error: 'API key is required. Please configure your OpenRouter API key in Settings.' });
-  }
-
-  const openai = createOpenAIClient(currentApiKey);
+  const openai = createOpenAIClient(apiKeyInfo.key);
 
   try {
     const stream = await openai.chat.completions.create({
@@ -393,12 +387,12 @@ app.post('/api/vision/analyze', async (req, res) => {
     return res.status(400).json({ error: 'Image data is required' });
   }
 
-  const currentApiKey = apiKeyFromHeader || getApiKey();
-  if (!currentApiKey) {
-    return res.status(401).json({ error: 'API key is required. Please configure your OpenRouter API key in Settings.' });
+  const apiKeyInfo = getApiKeyFromRequest(apiKeyFromHeader);
+  if (!apiKeyInfo.key) {
+    return res.status(401).json({ error: 'API key is required. Please add your OpenRouter API key in Settings or set OPENROUTER_API_KEY environment variable.' });
   }
 
-  const openai = createOpenAIClient(currentApiKey);
+  const openai = createOpenAIClient(apiKeyInfo.key);
 
   try {
     const response = await openai.chat.completions.create({
