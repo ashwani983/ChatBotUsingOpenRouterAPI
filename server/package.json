@@ -1,6 +1,6 @@
 {
   "name": "occhat-server",
-  "version": "4.3.6",
+  "version": "4.3.7",
   "description": "OpenControlChat Server with OpenRouter",
   "main": "dist/server.js",
   "scripts": {
